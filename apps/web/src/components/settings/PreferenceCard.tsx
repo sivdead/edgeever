@@ -1,4 +1,4 @@
-import { AlignHorizontalJustifyCenter, AppWindow, BookOpenText, ChartNoAxesCombined, Image, Keyboard, Languages, MousePointerClick, Palette, Sparkles, SunMoon } from "lucide-react";
+import { AlignHorizontalJustifyCenter, AppWindow, BookOpenText, ChartNoAxesCombined, Image, Keyboard, Languages, ListTree, MousePointerClick, Palette, Sparkles, SunMoon } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { EditorContentAlignment } from "@/lib/app-helpers";
@@ -20,7 +20,7 @@ import {
 } from "@/lib/ai-space-shortcut-preference";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SETTINGS_ITEM_TITLE_CLASSNAME } from "./settings-ui";
+import { SETTINGS_ITEM_DESCRIPTION_CLASSNAME, SETTINGS_ITEM_ICON_CLASSNAME, SETTINGS_ITEM_TITLE_CLASSNAME } from "./settings-ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -40,6 +40,7 @@ import {
 } from "@/lib/editor-body-font";
 import { applyUiFontPreference, readUiFontPreference, writeUiFontPreference } from "@/lib/ui-font";
 import { syncPublishedNoteBodyFont } from "@/lib/published-note-body-font";
+import { useUserPreferences } from "@/lib/use-user-preferences";
 import { CustomEditorThemeDialog } from "./CustomEditorThemeDialog";
 
 const PreferenceSection = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -179,6 +180,7 @@ const FontChoiceFields = ({
 };
 
 interface PreferenceCardProps {
+  userId: string | null;
   imageCompressionEnabled: boolean;
   onImageCompressionChange: (enabled: boolean) => void;
   editorContentAlignment: EditorContentAlignment;
@@ -186,12 +188,19 @@ interface PreferenceCardProps {
 }
 
 export const PreferenceCard = ({
+  userId,
   imageCompressionEnabled,
   onImageCompressionChange,
   editorContentAlignment,
   onEditorContentAlignmentChange,
 }: PreferenceCardProps) => {
   const { t } = useTranslation();
+  const {
+    preferences: userPreferences,
+    updatePreferences: updateUserPreferences,
+    isUpdating: isUpdatingUserPreferences,
+    updateError: showDescendantNotesError,
+  } = useUserPreferences(userId);
   const {
     editorTheme,
     customEditorThemes,
@@ -384,6 +393,27 @@ export const PreferenceCard = ({
                 <SelectItem value="dark">{t("settings.themeDark")}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="flex min-h-16 flex-col items-start gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <ListTree className={SETTINGS_ITEM_ICON_CLASSNAME} />
+            <div className="min-w-0">
+              <div className={SETTINGS_ITEM_TITLE_CLASSNAME}>{t("settings.showDescendantNotesTitle")}</div>
+              <div className={SETTINGS_ITEM_DESCRIPTION_CLASSNAME}>{t("settings.showDescendantNotesDescription")}</div>
+              {showDescendantNotesError ? (
+                <div className="mt-1 text-xs leading-4 text-red-600" role="alert">{t("settings.showDescendantNotesSaveFailed")}</div>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex w-full shrink-0 justify-start sm:w-44 sm:justify-end">
+            <Switch
+              checked={userPreferences.showDescendantNotes}
+              disabled={!userId || isUpdatingUserPreferences}
+              onCheckedChange={(showDescendantNotes) => updateUserPreferences({ showDescendantNotes })}
+              aria-label={t("settings.showDescendantNotesAria")}
+            />
           </div>
         </div>
 

@@ -121,6 +121,11 @@ enum NotebookHierarchy {
         return descendantIds
     }
 
+    /// Port of `getNotebookScopeIds`: the notebooks a notebook view lists.
+    static func scopeIds(notebooks: [Notebook], targetNotebookId: String, includeDescendants: Bool) -> [String] {
+        includeDescendants ? descendantIds(notebooks: notebooks, targetNotebookId: targetNotebookId) : [targetNotebookId]
+    }
+
     static func treeItems(from notebooks: [Notebook]) -> [NotebookTreeItem] {
         let byParent = Dictionary(grouping: notebooks) { $0.parentId ?? "" }
         var items: [NotebookTreeItem] = []

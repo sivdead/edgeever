@@ -31,3 +31,18 @@ export const getNotebookDescendantIds = (notebooks: Notebook[], targetNotebookId
 
   return descendantIds;
 };
+
+// Notebooks whose memos a notebook view lists: the notebook alone, or its
+// whole subtree when the account shows descendant notes.
+export const getNotebookScopeIds = (notebooks: Notebook[], targetNotebookId: string, includeDescendants: boolean) =>
+  includeDescendants ? getNotebookDescendantIds(notebooks, targetNotebookId) : [targetNotebookId];
+
+// A parent notebook shows "direct/total" once descendant notes are hidden, so
+// the first number always matches what opening it lists.
+export const formatNotebookMemoCount = (
+  counts: { directCount: number; totalCount: number; hasChildren: boolean },
+  showDescendantNotes: boolean,
+) => {
+  if (showDescendantNotes) return String(counts.totalCount);
+  return counts.hasChildren ? `${counts.directCount}/${counts.totalCount}` : String(counts.directCount);
+};

@@ -338,6 +338,43 @@ struct SettingsView: View {
                         .tint(AppTheme.accent)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
+                preferenceBlock(
+                    title: env.preferences.t("显示子笔记本中的笔记", en: "Show notes from sub-notebooks", ja: "サブノートブックのノートを表示"),
+                    description: env.preferences.t(
+                        "开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。此设置随账号同步。",
+                        en: "When on, opening a parent notebook also lists notes from all of its sub-notebooks. When off, only notes stored directly in that notebook are listed. Synced with your account.",
+                        ja: "オンにすると、親ノートブックを開いたときにすべてのサブノートブックのノートも一覧表示します。オフにすると、そのノートブックに直接保存されたノートのみを表示します。アカウントと同期されます。"
+                    ),
+                    showTopBorder: true
+                ) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Toggle("", isOn: Binding(
+                            get: { env.accountPreferences.preferences.showDescendantNotes },
+                            set: { value in
+                                Task { await env.accountPreferences.setShowDescendantNotes(value, client: env.session.client) }
+                            }
+                        ))
+                        .labelsHidden()
+                        .tint(AppTheme.accent)
+                        .disabled(env.accountPreferences.isUpdating)
+                        .accessibilityLabel(env.preferences.t(
+                            "是否在父笔记本中显示子笔记本中的笔记",
+                            en: "Show notes from sub-notebooks in parent notebooks",
+                            ja: "親ノートブックにサブノートブックのノートを表示する"
+                        ))
+                        if env.accountPreferences.updateFailed {
+                            Text(env.preferences.t(
+                                "无法保存“显示子笔记本中的笔记”设置，请稍后重试",
+                                en: "Could not save the \"Show notes from sub-notebooks\" setting. Please try again.",
+                                ja: "「サブノートブックのノートを表示」の設定を保存できませんでした。しばらくしてから再試行してください。"
+                            ))
+                            .font(.system(size: 12))
+                            .foregroundStyle(.red)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 // List density lives in list-options sheet (Android NotesActionsModal), not here.
             }
         }

@@ -152,3 +152,68 @@ final class PreferencesStore {
         static let aiAssistantLastAction = "edgeever.aiAssistant.lastAction"
     }
 }
+
+
+/// Account-level preferences owned by the server. The UserDefaults copy only keeps the
+/// last known value per account so the notebook view is right offline and at launch.
+@Observable
+@MainActor
+final class AccountPreferencesStore {
+    private(set) var preferences = UserPreferences()
+    private(set) var isUpdating = false
+    private(set) var updateFailed = false
+
+    private var scope: String?
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    /// Switches to the signed-in account's cached copy, then refreshes it from the server.
+    func activate(scope: String?, client: APIClient) async {
+        self.scope = scope
+        updateFailed = false
+        preferences = scope.map(cached) ?? UserPreferences()
+        await refresh(client: client)
+    }
+
+    func refresh(client: APIClient) async {
+        guard let scope else { return }
+        guard let remote = try? await client.getUserPreferences(), self.scope == scope else { return }
+        apply(remote, scope: scope)
+    }
+
+    func setShowDescendantNotes(_ value: Bool, client: APIClient) async {
+        guard let scope, preferences.showDescendantNotes != value else { return }
+        let previous = preferences
+        preferences.showDescendantNotes = value
+        updateFailed = false
+        isUpdating = true
+        defer { isUpdating = false }
+        do {
+            let saved = try await client.updateUserPreferences(showDescendantNotes: value)
+            if self.scope == scope { apply(saved, scope: scope) }
+        } catch {
+            guard self.scope == scope else { return }
+            preferences = previous
+            updateFailed = true
+        }
+    }
+
+    private func apply(_ value: UserPreferences, scope: String) {
+        preferences = value
+        if let data = try? JSONEncoder().encode(value) {
+            defaults.set(data, forKey: Self.key(scope))
+        }
+    }
+
+    private func cached(_ scope: String) -> UserPreferences {
+        guard let data = defaults.data(forKey: Self.key(scope)),
+              let value = try? JSONDecoder().decode(UserPreferences.self, from: data)
+        else { return UserPreferences() }
+        return value
+    }
+
+    static func key(_ scope: String) -> String { "edgeever.ios.userPreferences.\(scope)" }
+}

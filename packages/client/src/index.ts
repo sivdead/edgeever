@@ -9,6 +9,8 @@ import {
 import { createPluginCapabilities } from './plugin-capabilities';
 import { aiDirectTargetKey } from "@edgeever/shared";
 import type {
+  UserPreferences,
+  UserPreferencesUpdate,
   CompanionMemory,
   CompanionDiscoverySettings,
   CompanionDiscoverySettingsInput,
@@ -811,6 +813,14 @@ export const createEdgeEverClient = (options: EdgeEverClientOptions = {}) => {
       request<{ bodyFont: PublicMemoShare["bodyFont"] }>("/api/v1/me/note-body-font", {
         method: "PUT",
         body: JSON.stringify({ bodyFont }),
+      }),
+
+    getUserPreferences: () => request<{ preferences: UserPreferences }>("/api/v1/me/preferences"),
+
+    updateUserPreferences: (update: UserPreferencesUpdate) =>
+      request<{ preferences: UserPreferences }>("/api/v1/me/preferences", {
+        method: "PATCH",
+        body: JSON.stringify(update),
       }),
 
     unlockPublicMemoShare: (token: string, password: string) =>

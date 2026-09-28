@@ -117,6 +117,35 @@ final class MobileUIParityTests: XCTestCase {
         XCTAssertEqual(Set(ids), Set(["root", "child", "grand"]))
     }
 
+    func testNotebookScopeFollowsDescendantPreference() {
+        let notebooks = [
+            makeNotebook(id: "root", parent: nil, name: "Root", order: 0),
+            makeNotebook(id: "child", parent: "root", name: "Child", order: 0),
+            makeNotebook(id: "grand", parent: "child", name: "Grand", order: 0),
+        ]
+        XCTAssertEqual(
+            Set(NotebookHierarchy.scopeIds(notebooks: notebooks, targetNotebookId: "root", includeDescendants: true)),
+            Set(["root", "child", "grand"])
+        )
+        XCTAssertEqual(
+            NotebookHierarchy.scopeIds(notebooks: notebooks, targetNotebookId: "root", includeDescendants: false),
+            ["root"]
+        )
+    }
+
+    func testUserPreferencesDecodeWithDefaults() throws {
+        let decoder = JSONDecoder()
+        XCTAssertEqual(try decoder.decode(UserPreferences.self, from: Data("{}".utf8)), UserPreferences(showDescendantNotes: true))
+        XCTAssertEqual(
+            try decoder.decode(UserPreferences.self, from: Data(#"{"showDescendantNotes":false}"#.utf8)),
+            UserPreferences(showDescendantNotes: false)
+        )
+        XCTAssertEqual(
+            try decoder.decode(UserPreferences.self, from: Data(#"{"showDescendantNotes":"no"}"#.utf8)),
+            UserPreferences(showDescendantNotes: true)
+        )
+    }
+
     func testFilterCollapsedHidesDescendants() {
         let notebooks = [
             makeNotebook(id: "root", parent: nil, name: "Root", order: 0),

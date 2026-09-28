@@ -186,6 +186,7 @@ export const SettingsPane = ({
         return (
           <div className="grid gap-6">
             <PreferenceCard
+              userId={user?.id ?? null}
               imageCompressionEnabled={imageCompressionEnabled}
               onImageCompressionChange={onImageCompressionChange}
               editorContentAlignment={editorContentAlignment}
