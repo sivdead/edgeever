@@ -55,21 +55,6 @@ actor APIClient {
         try await request(path: "/api/v1/auth/session")
     }
 
-    func getUserPreferences() async throws -> UserPreferences {
-        let response: UserPreferencesResponse = try await request(path: "/api/v1/me/preferences")
-        return response.preferences
-    }
-
-    func updateUserPreferences(showDescendantNotes: Bool) async throws -> UserPreferences {
-        struct Body: Encodable { var showDescendantNotes: Bool }
-        let response: UserPreferencesResponse = try await request(
-            path: "/api/v1/me/preferences",
-            method: "PATCH",
-            body: Body(showDescendantNotes: showDescendantNotes)
-        )
-        return response.preferences
-    }
-
     func changePassword(current: String, newPassword: String, confirm: String) async throws {
         struct Body: Encodable {
             var currentPassword: String

@@ -67,7 +67,7 @@ final class WorkspaceStore {
             return NotebookHierarchy.scopeIds(
                 notebooks: notebooks,
                 targetNotebookId: selectedNotebookId,
-                includeDescendants: env.accountPreferences.preferences.showDescendantNotes
+                includeDescendants: env.preferences.showDescendantNotes
             )
         }()
         let result = try env.mirror.listMemos(

@@ -25,7 +25,6 @@ export * from "./memo-timestamps";
 export * from "./memo-template-seeds";
 export * from "./note-links";
 export * from "./notebooks";
-export * from "./user-preferences";
 export * from "./revision-diff";
 export * from "./resource-links";
 export * from "./schemas";

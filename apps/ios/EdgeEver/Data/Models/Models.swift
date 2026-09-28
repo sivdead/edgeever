@@ -17,25 +17,6 @@ struct AuthSession: Codable, Equatable, Sendable {
     var sessionToken: String?
 }
 
-/// Account-level preferences stored server-side (`/api/v1/me/preferences`).
-/// Missing keys decode to their defaults so older servers and caches keep working.
-struct UserPreferences: Codable, Equatable, Sendable {
-    var showDescendantNotes: Bool = true
-
-    init(showDescendantNotes: Bool = true) {
-        self.showDescendantNotes = showDescendantNotes
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        showDescendantNotes = (try? container.decodeIfPresent(Bool.self, forKey: .showDescendantNotes)) ?? true
-    }
-}
-
-struct UserPreferencesResponse: Codable, Sendable {
-    var preferences: UserPreferences
-}
-
 struct LoginInput: Encodable, Sendable {
     var username: String
     var password: String

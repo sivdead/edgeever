@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotebookTreeItem } from "./NotebookTreeItem";
 import { cn } from "@/lib/utils";
-import { useUserPreferences } from "@/lib/use-user-preferences";
+import { useShowDescendantNotesPreference } from "@/lib/descendant-notes-preference";
 import { BETA_BADGE_CLASSNAME } from "@/lib/workspace-ui";
 import type { Notebook, AuthUser, NoteCreateKind } from "@edgeever/shared";
 import type { NotebookNode, NotebookDropPosition, NotebookSortMode } from "@/lib/app-helpers";
@@ -539,7 +539,7 @@ export const NotebookPane = ({
   onToggleCollapsed?: () => void;
 }) => {
   const { t } = useTranslation();
-  const { preferences: userPreferences } = useUserPreferences(user?.id);
+  const showDescendantNotes = useShowDescendantNotesPreference();
   // Temporarily keep template actions out of the primary workspace navigation.
   const showTemplateEntry = true;
   const notebookScrollRef = useRef<HTMLDivElement | null>(null);
@@ -844,7 +844,7 @@ export const NotebookPane = ({
                 onOpenChange={handleNotebookOpenChange}
                 expandSiblingsRequest={expandSiblingsRequest}
                 onExpandSiblings={handleExpandNotebookSiblings}
-                showDescendantNotes={userPreferences.showDescendantNotes}
+                showDescendantNotes={showDescendantNotes}
               />
             ))}
           </div>

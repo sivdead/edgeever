@@ -7,8 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { BackHandler, Dimensions, Linking, Modal, PixelRatio, Platform, ScrollView, Switch, View } from "react-native";
 import { Activity, ActivityIndicator, Check, ChevronDown, ChevronLeft, ChevronRight, Cloud, Copy, ExternalLink, Image as ImageIcon, Info, LogOut, MessageSquare, MonitorSmartphone, Moon, RefreshCw, ShieldCheck, SlidersHorizontal, Sun, UserRound } from "../components/icons";
 import { Pressable, Text } from "../components/LocalizedText";
-import { useMobileUserPreferences } from "../hooks/useMobileUserPreferences";
-import { createMobileDataScope } from "../lib/local-mirror";
 import { useMobileLocale } from "../lib/mobile-locale";
 import { useMobileTheme } from "../lib/mobile-theme";
 import { useMobileUpdate } from "../lib/mobile-update";
@@ -91,7 +89,9 @@ export const SettingsView = ({
   onClose,
   onImageCompressionChange,
   onLocalePreferenceChange,
+  onShowDescendantNotesChange,
   onSignOut,
+  showDescendantNotes,
 }: {
   currentUser: AuthUser | null;
   imageCompressionEnabled: boolean;
@@ -99,7 +99,9 @@ export const SettingsView = ({
   onClose: () => void;
   onImageCompressionChange: (enabled: boolean) => void;
   onLocalePreferenceChange: (locale: MobileLocaleMode) => void;
+  onShowDescendantNotesChange: (enabled: boolean) => void;
   onSignOut: () => void;
+  showDescendantNotes: boolean;
 }) => {
   const { resolvedTheme, toggleTheme } = useMobileTheme();
   const { translate } = useMobileLocale();
@@ -110,12 +112,6 @@ export const SettingsView = ({
   const [localePickerAnchor, setLocalePickerAnchor] = useState<{ left: number; top: number; width: number } | null>(null);
   const localeSelectRef = useRef<ComponentRef<typeof Pressable>>(null);
   const syncQueueScope = session?.baseUrl ?? "";
-  const {
-    preferences: userPreferences,
-    updatePreferences: updateUserPreferences,
-    isUpdating: isUpdatingUserPreferences,
-    updateError: userPreferencesUpdateError,
-  } = useMobileUserPreferences({ client, dataScope: createMobileDataScope(session?.baseUrl ?? "", session?.user?.id) });
   const instanceDiagnosticsQuery = useQuery({
     queryKey: ["mobile", "system-info", "instance", session?.baseUrl],
     queryFn: async (): Promise<MobileInstanceDiagnostics> => {
@@ -232,16 +228,10 @@ export const SettingsView = ({
               <View style={styles.preferenceStack}>
                 <View style={styles.preferenceText}>
                   <Text style={styles.settingsRowTitle}>显示子笔记本中的笔记</Text>
-                  <Text style={styles.settingsRowDescription}>开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。此设置随账号同步。</Text>
-                  {userPreferencesUpdateError ? <Text accessibilityRole="alert" style={styles.errorText}>无法保存“显示子笔记本中的笔记”设置，请稍后重试</Text> : null}
+                  <Text style={styles.settingsRowDescription}>开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。</Text>
                 </View>
                 <View style={styles.settingsSwitchStart}>
-                  <Switch
-                    accessibilityLabel={translate("是否在父笔记本中显示子笔记本中的笔记")}
-                    disabled={!client || isUpdatingUserPreferences}
-                    onValueChange={(showDescendantNotes) => updateUserPreferences({ showDescendantNotes })}
-                    value={userPreferences.showDescendantNotes}
-                  />
+                  <Switch accessibilityLabel={translate("是否在父笔记本中显示子笔记本中的笔记")} onValueChange={onShowDescendantNotesChange} value={showDescendantNotes} />
                 </View>
               </View>
             </View>

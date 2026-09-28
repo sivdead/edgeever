@@ -133,19 +133,6 @@ final class MobileUIParityTests: XCTestCase {
         )
     }
 
-    func testUserPreferencesDecodeWithDefaults() throws {
-        let decoder = JSONDecoder()
-        XCTAssertEqual(try decoder.decode(UserPreferences.self, from: Data("{}".utf8)), UserPreferences(showDescendantNotes: true))
-        XCTAssertEqual(
-            try decoder.decode(UserPreferences.self, from: Data(#"{"showDescendantNotes":false}"#.utf8)),
-            UserPreferences(showDescendantNotes: false)
-        )
-        XCTAssertEqual(
-            try decoder.decode(UserPreferences.self, from: Data(#"{"showDescendantNotes":"no"}"#.utf8)),
-            UserPreferences(showDescendantNotes: true)
-        )
-    }
-
     func testFilterCollapsedHidesDescendants() {
         let notebooks = [
             makeNotebook(id: "root", parent: nil, name: "Root", order: 0),

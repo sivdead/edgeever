@@ -26,7 +26,7 @@ import { AppConfirmDialog, MemoDeleteConfirmDialog, NotebookNameDialog } from ".
 import { PluginPanelDialog } from "./plugins/PluginPanelDialog";
 import { shouldDiscardPluginNoteSearchRequest } from "./editor/note-search";
 import { api, getOrCreateClientDeviceId } from "@/lib/api";
-import { useUserPreferences } from "@/lib/use-user-preferences";
+import { useShowDescendantNotesPreference } from "@/lib/descendant-notes-preference";
 import { MarkdownExportMemoryLimitError, type MarkdownExportProgress } from "@/lib/markdown-export";
 import { exportSelectedMemosAsMarkdownZip } from "@/lib/selected-markdown-export";
 import { createPluginScheduleAdapter } from "@/lib/plugins/plugin-schedule-adapter";
@@ -1052,10 +1052,10 @@ export const WorkspaceApp = ({
     setOnline: setIsOnline,
   });
 
-  const { preferences: userPreferences } = useUserPreferences(user?.id);
+  const showDescendantNotes = useShowDescendantNotesPreference();
   const selectedNotebookScopeIds = useMemo(
-    () => (selectedNotebookId && !selectedTag ? getNotebookScopeIds(notebooks, selectedNotebookId, userPreferences.showDescendantNotes) : []),
-    [notebooks, selectedNotebookId, selectedTag, userPreferences.showDescendantNotes]
+    () => (selectedNotebookId && !selectedTag ? getNotebookScopeIds(notebooks, selectedNotebookId, showDescendantNotes) : []),
+    [notebooks, selectedNotebookId, selectedTag, showDescendantNotes]
   );
   const memosQuery = useInfiniteQuery({
     queryKey: ["memos", memoView, selectedNotebookId, search, memoFilterMode, memoSortMode, selectedNotebookScopeIds, selectedTag],

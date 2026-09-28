@@ -123,7 +123,6 @@ import {
 } from "./user-routes";
 import { registerNotebookRoutes } from "./notebook-routes";
 import { registerMemoShareRoutes, registerPublicShareRoutes } from "./share-routes";
-import { registerUserPreferenceRoutes } from "./user-preference-routes";
 import { registerPublicTableFormRoutes, registerTableFormRoutes } from "./table-form-routes";
 import {
   deleteStoredObjects,
@@ -334,7 +333,6 @@ registerPluginDistributionRoutes(app);
 registerScheduledTaskRoutes(app);
 registerWorkspaceExtensionRoutes(app, { isDemoMode: (...args) => isDemoMode(...args) });
 registerMemoShareRoutes(app);
-registerUserPreferenceRoutes(app);
 registerTableFormRoutes(app);
 registerTemplateRoutes(app, {
   createMemoRecord: (...args) => createMemoRecord(...args),

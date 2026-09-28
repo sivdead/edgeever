@@ -210,14 +210,10 @@ struct WorkspaceView: View {
             .onChange(of: env.bootstrapProgress?.totalCount) { _, _ in
                 store.reload(env: env)
             }
-            .task(id: env.session.dataScope) {
-                await env.accountPreferences.activate(scope: env.session.dataScope, client: env.session.client)
-            }
-            .onChange(of: env.accountPreferences.preferences.showDescendantNotes) { _, _ in
+            .onChange(of: env.preferences.showDescendantNotes) { _, _ in
                 store.reload(env: env)
             }
             .refreshable {
-                await env.accountPreferences.refresh(client: env.session.client)
                 await env.runSyncCycle(force: true)
                 store.reload(env: env)
                 detectConflicts()

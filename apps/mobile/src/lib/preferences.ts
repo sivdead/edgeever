@@ -9,6 +9,7 @@ import {
 
 const MEMO_LIST_DENSITY_KEY = "edgeever.mobile.memoListDensity";
 const IMAGE_COMPRESSION_KEY = "edgeever.mobile.imageCompressionEnabled";
+const SHOW_DESCENDANT_NOTES_KEY = "edgeever.mobile.showDescendantNotes";
 const LOCALE_PREFERENCE_KEY = "edgeever.mobile.localePreference";
 const THEME_PREFERENCE_KEY = "edgeever.mobile.themePreference";
 
@@ -29,6 +30,14 @@ export const readMobileImageCompressionEnabled = async () => {
 };
 
 export const writeMobileImageCompressionEnabled = (enabled: boolean) => AsyncStorage.setItem(IMAGE_COMPRESSION_KEY, enabled ? "true" : "false");
+
+// Parent notebooks keep listing their sub-notebooks' notes unless turned off.
+export const readMobileShowDescendantNotes = async () => {
+  const value = await AsyncStorage.getItem(SHOW_DESCENDANT_NOTES_KEY);
+  return value !== "false";
+};
+
+export const writeMobileShowDescendantNotes = (enabled: boolean) => AsyncStorage.setItem(SHOW_DESCENDANT_NOTES_KEY, enabled ? "true" : "false");
 
 export const readMobileLocalePreference = async (): Promise<MobileLocalePreference> => {
   const value = await AsyncStorage.getItem(LOCALE_PREFERENCE_KEY);

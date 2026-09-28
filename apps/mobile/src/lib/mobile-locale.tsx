@@ -20,9 +20,8 @@ type TranslationPair = { source: string; target: string; pattern?: RegExp; place
 
 const mobileOnlyTranslations = new Map<string, string>([
   ["显示子笔记本中的笔记", "Show notes from sub-notebooks"],
-  ["开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。此设置随账号同步。", "When on, opening a parent notebook also lists notes from all of its sub-notebooks. When off, only notes stored directly in that notebook are listed. Synced with your account."],
+  ["开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。", "When on, opening a parent notebook also lists notes from all of its sub-notebooks. When off, only notes stored directly in that notebook are listed."],
   ["是否在父笔记本中显示子笔记本中的笔记", "Show notes from sub-notebooks in parent notebooks"],
-  ["无法保存“显示子笔记本中的笔记”设置，请稍后重试", "Could not save the \"Show notes from sub-notebooks\" setting. Please try again."],
   ["返回", "Back"],
   ["关闭对话框", "Close dialog"],
   ["切换到深色模式", "Switch to dark mode"],
@@ -189,9 +188,8 @@ const mobileOnlyTranslations = new Map<string, string>([
 
 const mobileOnlyJapanese = new Map<string, string>([
   ["显示子笔记本中的笔记", "サブノートブックのノートを表示"],
-  ["开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。此设置随账号同步。", "オンにすると、親ノートブックを開いたときにすべてのサブノートブックのノートも一覧表示します。オフにすると、そのノートブックに直接保存されたノートのみを表示します。アカウントと同期されます。"],
+  ["开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。", "オンにすると、親ノートブックを開いたときにすべてのサブノートブックのノートも一覧表示します。オフにすると、そのノートブックに直接保存されたノートのみを表示します。"],
   ["是否在父笔记本中显示子笔记本中的笔记", "親ノートブックにサブノートブックのノートを表示する"],
-  ["无法保存“显示子笔记本中的笔记”设置，请稍后重试", "「サブノートブックのノートを表示」の設定を保存できませんでした。しばらくしてから再試行してください。"],
   ["返回", "戻る"],
   ["关闭对话框", "ダイアログを閉じる"],
   ["切换到深色模式", "ダークモードに切り替え"],

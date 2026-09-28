@@ -40,7 +40,7 @@ import {
 } from "@/lib/editor-body-font";
 import { applyUiFontPreference, readUiFontPreference, writeUiFontPreference } from "@/lib/ui-font";
 import { syncPublishedNoteBodyFont } from "@/lib/published-note-body-font";
-import { useUserPreferences } from "@/lib/use-user-preferences";
+import { useShowDescendantNotesPreference, writeShowDescendantNotesPreference } from "@/lib/descendant-notes-preference";
 import { CustomEditorThemeDialog } from "./CustomEditorThemeDialog";
 
 const PreferenceSection = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -180,7 +180,6 @@ const FontChoiceFields = ({
 };
 
 interface PreferenceCardProps {
-  userId: string | null;
   imageCompressionEnabled: boolean;
   onImageCompressionChange: (enabled: boolean) => void;
   editorContentAlignment: EditorContentAlignment;
@@ -188,19 +187,13 @@ interface PreferenceCardProps {
 }
 
 export const PreferenceCard = ({
-  userId,
   imageCompressionEnabled,
   onImageCompressionChange,
   editorContentAlignment,
   onEditorContentAlignmentChange,
 }: PreferenceCardProps) => {
   const { t } = useTranslation();
-  const {
-    preferences: userPreferences,
-    updatePreferences: updateUserPreferences,
-    isUpdating: isUpdatingUserPreferences,
-    updateError: showDescendantNotesError,
-  } = useUserPreferences(userId);
+  const showDescendantNotes = useShowDescendantNotesPreference();
   const {
     editorTheme,
     customEditorThemes,
@@ -402,16 +395,12 @@ export const PreferenceCard = ({
             <div className="min-w-0">
               <div className={SETTINGS_ITEM_TITLE_CLASSNAME}>{t("settings.showDescendantNotesTitle")}</div>
               <div className={SETTINGS_ITEM_DESCRIPTION_CLASSNAME}>{t("settings.showDescendantNotesDescription")}</div>
-              {showDescendantNotesError ? (
-                <div className="mt-1 text-xs leading-4 text-red-600" role="alert">{t("settings.showDescendantNotesSaveFailed")}</div>
-              ) : null}
             </div>
           </div>
           <div className="flex w-full shrink-0 justify-start sm:w-44 sm:justify-end">
             <Switch
-              checked={userPreferences.showDescendantNotes}
-              disabled={!userId || isUpdatingUserPreferences}
-              onCheckedChange={(showDescendantNotes) => updateUserPreferences({ showDescendantNotes })}
+              checked={showDescendantNotes}
+              onCheckedChange={writeShowDescendantNotesPreference}
               aria-label={t("settings.showDescendantNotesAria")}
             />
           </div>

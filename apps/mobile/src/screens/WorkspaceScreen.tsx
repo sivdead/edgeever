@@ -24,8 +24,10 @@ import { MOBILE_UI_METRICS, toggleMobileMemoFilterMode } from "@edgeever/shared/
 import { clearMobileMemoDraft, readMobileMemoDraft, type MobileMemoDraft } from "../lib/mobile-drafts";
 import {
   readMobileImageCompressionEnabled,
+  readMobileShowDescendantNotes,
   readMobileMemoListDensity,
   writeMobileImageCompressionEnabled,
+  writeMobileShowDescendantNotes,
   writeMobileMemoListDensity,
   type MobileLocalePreference,
   type MobileMemoListDensity,
@@ -80,7 +82,6 @@ import {
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useMobileAutomaticSync } from "../hooks/useMobileAutomaticSync";
 import { useMobileLocalMirrorSync } from "../hooks/useMobileLocalMirrorSync";
-import { useMobileUserPreferences } from "../hooks/useMobileUserPreferences";
 import { useMobileWorkspaceSelection } from "../hooks/useMobileWorkspaceSelection";
 import {
   flattenNotebooks,
@@ -158,6 +159,8 @@ export const WorkspaceScreen = ({
   const [memoSortMode, setMemoSortMode] = useState<MemoSortMode>("updated-desc");
   const [memoListDensity, setMemoListDensity] = useState<MobileMemoListDensity>("preview");
   const [imageCompressionEnabled, setImageCompressionEnabled] = useState(true);
+  // Null until the stored value loads, so lists never flash the wrong notebook scope.
+  const [showDescendantNotes, setShowDescendantNotes] = useState<boolean | null>(null);
   const [selectedMemoId, setSelectedMemoId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -251,10 +254,9 @@ export const WorkspaceScreen = ({
   }, [activeNotebookId, localePreference, notebooks, selectedTag]);
 
   const activeNotebook = notebooks.find((notebook) => notebook.id === activeNotebookId) ?? null;
-  const { preferences: userPreferences, isReady: userPreferencesReady } = useMobileUserPreferences({ client, dataScope });
   const activeNotebookScopeIds = useMemo(
-    () => (activeNotebookId === ALL_NOTES_ID || selectedTag ? [] : getNotebookScopeIds(notebooks, activeNotebookId, userPreferences.showDescendantNotes)),
-    [activeNotebookId, notebooks, selectedTag, userPreferences.showDescendantNotes]
+    () => (activeNotebookId === ALL_NOTES_ID || selectedTag ? [] : getNotebookScopeIds(notebooks, activeNotebookId, showDescendantNotes ?? true)),
+    [activeNotebookId, notebooks, selectedTag, showDescendantNotes]
   );
 
   const memosQuery = useInfiniteQuery({
@@ -276,7 +278,7 @@ export const WorkspaceScreen = ({
       });
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor ? Number(lastPage.nextCursor) : undefined,
-    enabled: Boolean(client) && userPreferencesReady,
+    enabled: Boolean(client) && showDescendantNotes !== null,
     placeholderData: keepPreviousData,
   });
 
@@ -300,7 +302,7 @@ export const WorkspaceScreen = ({
       });
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor ? Number(lastPage.nextCursor) : undefined,
-    enabled: Boolean(client && debouncedSearchText.length > 0) && userPreferencesReady,
+    enabled: Boolean(client && debouncedSearchText.length > 0) && showDescendantNotes !== null,
     placeholderData: keepPreviousData,
   });
 
@@ -725,6 +727,11 @@ export const WorkspaceScreen = ({
         setImageCompressionEnabled(enabled);
       }
     });
+    readMobileShowDescendantNotes().then((enabled) => {
+      if (mounted) {
+        setShowDescendantNotes(enabled);
+      }
+    });
 
     return () => {
       mounted = false;
@@ -757,6 +764,11 @@ export const WorkspaceScreen = ({
   const handleImageCompressionChange = (enabled: boolean) => {
     setImageCompressionEnabled(enabled);
     void writeMobileImageCompressionEnabled(enabled);
+  };
+
+  const handleShowDescendantNotesChange = (enabled: boolean) => {
+    setShowDescendantNotes(enabled);
+    void writeMobileShowDescendantNotes(enabled);
   };
 
   const optimisticallyRemoveMemoIds = async (memoIds: string[]): Promise<MobileMemoListCacheSnapshot> => {
@@ -1266,6 +1278,8 @@ export const WorkspaceScreen = ({
           onLocalePreferenceChange={handleLocalePreferenceChange}
           imageCompressionEnabled={imageCompressionEnabled}
           onImageCompressionChange={handleImageCompressionChange}
+          showDescendantNotes={showDescendantNotes ?? true}
+          onShowDescendantNotesChange={handleShowDescendantNotesChange}
           onSignOut={signOut}
         />
       ) : null}

@@ -20,7 +20,6 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task {
                 if env.session.isSignedIn {
-                    await env.accountPreferences.refresh(client: env.session.client)
                     await env.runSyncCycle()
                 }
             }

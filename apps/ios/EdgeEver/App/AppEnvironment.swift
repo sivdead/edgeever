@@ -11,7 +11,6 @@ final class AppEnvironment {
     let syncEngine: SyncEngine
     let outboxFlusher: OutboxFlusher
     let preferences: PreferencesStore
-    let accountPreferences: AccountPreferencesStore
     let shareHandoff: ShareHandoffStore
 
     private(set) var bootstrapProgress: BootstrapProgress?
@@ -34,7 +33,6 @@ final class AppEnvironment {
         self.syncEngine = syncEngine
         self.outboxFlusher = flusher
         self.preferences = PreferencesStore()
-        self.accountPreferences = AccountPreferencesStore()
         self.shareHandoff = ShareHandoffStore()
     }
 
@@ -47,7 +45,6 @@ final class AppEnvironment {
         syncEngine: SyncEngine,
         outboxFlusher: OutboxFlusher,
         preferences: PreferencesStore = PreferencesStore(),
-        accountPreferences: AccountPreferencesStore = AccountPreferencesStore(),
         shareHandoff: ShareHandoffStore = ShareHandoffStore()
     ) {
         self.session = session
@@ -57,7 +54,6 @@ final class AppEnvironment {
         self.syncEngine = syncEngine
         self.outboxFlusher = outboxFlusher
         self.preferences = preferences
-        self.accountPreferences = accountPreferences
         self.shareHandoff = shareHandoff
     }
 
