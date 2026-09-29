@@ -133,6 +133,17 @@ final class MobileUIParityTests: XCTestCase {
         )
     }
 
+    func testNotebookDescendantMemoCountExcludesTheNotebookItself() {
+        let notebooks = [
+            makeNotebook(id: "root", parent: nil, name: "Root", order: 0, memoCount: 2),
+            makeNotebook(id: "child", parent: "root", name: "Child", order: 0, memoCount: 3),
+            makeNotebook(id: "grand", parent: "child", name: "Grand", order: 0, memoCount: 1),
+            makeNotebook(id: "other", parent: nil, name: "Other", order: 1, memoCount: 9),
+        ]
+        XCTAssertEqual(NotebookHierarchy.descendantMemoCount(notebooks: notebooks, targetNotebookId: "root"), 4)
+        XCTAssertEqual(NotebookHierarchy.descendantMemoCount(notebooks: notebooks, targetNotebookId: "grand"), 0)
+    }
+
     func testFilterCollapsedHidesDescendants() {
         let notebooks = [
             makeNotebook(id: "root", parent: nil, name: "Root", order: 0),
@@ -405,7 +416,7 @@ final class MobileUIParityTests: XCTestCase {
         XCTAssertEqual(tagged.memos.map(\.id), ["p2"])
     }
 
-    private func makeNotebook(id: String, parent: String?, name: String, order: Int) -> Notebook {
+    private func makeNotebook(id: String, parent: String?, name: String, order: Int, memoCount: Int = 0) -> Notebook {
         Notebook(
             id: id,
             parentId: parent,
@@ -414,7 +425,7 @@ final class MobileUIParityTests: XCTestCase {
             icon: nil,
             color: nil,
             sortOrder: order,
-            memoCount: 0,
+            memoCount: memoCount,
             lastMemoUpdatedAt: nil,
             createdAt: EdgeEverDate.nowString(),
             updatedAt: EdgeEverDate.nowString()

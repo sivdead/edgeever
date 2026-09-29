@@ -18,6 +18,15 @@ describe("mobile locale translation", () => {
     expect(translateMobileText("筛选：Pinned · 3 条", "en-US")).toBe("Filter: Pinned · 3 notes");
   });
 
+  test("translates the hidden sub-notebook notes hint", () => {
+    const hint = "子笔记本中还有 5 条笔记。可以打开子笔记本查看，或在设置中开启“显示子笔记本中的笔记”。";
+    expect(translateMobileText(hint, "en-US"))
+      .toBe("Its sub-notebooks still contain 5 notes. Open a sub-notebook to see them, or turn on \"Show notes from sub-notebooks\" in Settings.");
+    expect(translateMobileText(hint, "ja"))
+      .toBe("サブノートブックにはまだ 5 件のノートがあります。サブノートブックを開くか、設定で「サブノートブックのノートを表示」をオンにしてください。");
+    expect(translateMobileText("本级暂无笔记", "en-US")).toBe("No notes directly in this notebook");
+  });
+
   test("prefers specific shared templates over broader mobile-only templates", () => {
     expect(translateMobileText("永久删除 3 条笔记", "en-US")).toBe("Delete 3 notes permanently");
     expect(translateMobileText("当前：Inbox，3 条笔记", "en-US")).toBe("Current: Inbox, 3 notes");

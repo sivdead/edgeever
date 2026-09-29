@@ -8,8 +8,13 @@ export const SHOW_DESCENDANT_NOTES_CHANGED_EVENT = "edgeever:show-descendant-not
 export const resolveStoredShowDescendantNotes = (stored: string | null): boolean =>
   stored !== "false";
 
+// Holds the choice while localStorage rejects writes, so the toggle still works
+// for the rest of this page session.
+let unsavedPreference: boolean | null = null;
+
 export const readShowDescendantNotesPreference = (): boolean => {
   if (typeof window === "undefined") return true;
+  if (unsavedPreference !== null) return unsavedPreference;
   try {
     return resolveStoredShowDescendantNotes(
       window.localStorage?.getItem(SHOW_DESCENDANT_NOTES_STORAGE_KEY) ?? null,
@@ -23,8 +28,10 @@ export const writeShowDescendantNotesPreference = (enabled: boolean) => {
   if (typeof window === "undefined") return;
   try {
     window.localStorage?.setItem(SHOW_DESCENDANT_NOTES_STORAGE_KEY, enabled ? "true" : "false");
+    unsavedPreference = null;
   } catch {
-    // Private mode / blocked storage — preference is session-only via the event.
+    // Private mode / blocked storage — keep the choice in memory for this session.
+    unsavedPreference = enabled;
   }
   window.dispatchEvent(
     new CustomEvent(SHOW_DESCENDANT_NOTES_CHANGED_EVENT, { detail: enabled }),

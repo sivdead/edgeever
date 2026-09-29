@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { formatNotebookMemoCount, getNotebookDescendantIds, getNotebookScopeIds } from "./notebooks.ts";
+import { formatNotebookMemoCount, getNotebookDescendantIds, getNotebookDescendantMemoCount, getNotebookScopeIds } from "./notebooks.ts";
 
-const notebook = (id, parentId) => ({
+const notebook = (id, parentId, memoCount = 0) => ({
   id,
   parentId,
   name: id,
@@ -9,7 +9,7 @@ const notebook = (id, parentId) => ({
   icon: null,
   color: null,
   sortOrder: 0,
-  memoCount: 0,
+  memoCount,
   lastMemoUpdatedAt: null,
   createdAt: "",
   updatedAt: "",
@@ -59,5 +59,19 @@ describe("formatNotebookMemoCount", () => {
 
   test("shows a single number for a leaf when descendant notes are hidden", () => {
     expect(formatNotebookMemoCount({ directCount: 2, totalCount: 2, hasChildren: false }, false)).toBe("2");
+  });
+});
+
+describe("getNotebookDescendantMemoCount", () => {
+  test("sums notes in sub-notebooks at every depth but not the notebook itself", () => {
+    const notebooks = [
+      notebook("root", null, 2),
+      notebook("child", "root", 3),
+      notebook("grandchild", "child", 1),
+      notebook("other", null, 9),
+    ];
+
+    expect(getNotebookDescendantMemoCount(notebooks, "root")).toBe(4);
+    expect(getNotebookDescendantMemoCount(notebooks, "grandchild")).toBe(0);
   });
 });

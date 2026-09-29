@@ -56,4 +56,23 @@ describe("show descendant notes preference", () => {
     globalThis.window = { localStorage: { getItem: () => { throw new Error("blocked"); } } };
     expect(readShowDescendantNotesPreference()).toBe(true);
   });
+
+  test("keeps the choice for this session when storage rejects the write", () => {
+    const { events, values } = installWindow();
+    values.set(SHOW_DESCENDANT_NOTES_STORAGE_KEY, "true");
+    globalThis.window.localStorage.setItem = () => {
+      throw new Error("QuotaExceededError");
+    };
+
+    writeShowDescendantNotesPreference(false);
+    expect(readShowDescendantNotesPreference()).toBe(false);
+    expect(events.map((event) => event.detail)).toEqual([false]);
+
+    // Once storage accepts writes again, the stored value takes over.
+    const restored = installWindow();
+    writeShowDescendantNotesPreference(true);
+    expect(restored.values.get(SHOW_DESCENDANT_NOTES_STORAGE_KEY)).toBe("true");
+    restored.values.set(SHOW_DESCENDANT_NOTES_STORAGE_KEY, "false");
+    expect(readShowDescendantNotesPreference()).toBe(false);
+  });
 });

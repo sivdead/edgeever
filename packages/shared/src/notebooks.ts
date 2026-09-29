@@ -37,6 +37,15 @@ export const getNotebookDescendantIds = (notebooks: Notebook[], targetNotebookId
 export const getNotebookScopeIds = (notebooks: Notebook[], targetNotebookId: string, includeDescendants: boolean) =>
   includeDescendants ? getNotebookDescendantIds(notebooks, targetNotebookId) : [targetNotebookId];
 
+// Notes stored in a notebook's sub-notebooks (not the notebook itself). Expects
+// direct per-notebook counts, as the notebook list endpoints return them.
+export const getNotebookDescendantMemoCount = (notebooks: Notebook[], targetNotebookId: string) => {
+  const memoCountById = new Map(notebooks.map((notebook) => [notebook.id, notebook.memoCount]));
+  return getNotebookDescendantIds(notebooks, targetNotebookId)
+    .filter((notebookId) => notebookId !== targetNotebookId)
+    .reduce((total, notebookId) => total + (memoCountById.get(notebookId) ?? 0), 0);
+};
+
 // A parent notebook shows "direct/total" once descendant notes are hidden, so
 // the first number always matches what opening it lists.
 export const formatNotebookMemoCount = (
