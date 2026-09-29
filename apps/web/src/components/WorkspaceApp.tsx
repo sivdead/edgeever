@@ -1055,6 +1055,10 @@ export const WorkspaceApp = ({
   });
 
   const showDescendantNotes = useShowDescendantNotesPreference();
+  useEffect(() => {
+    // A changed scope must not retain hidden notes in bulk actions.
+    clearMemoSelection();
+  }, [showDescendantNotes, clearMemoSelection]);
   const selectedNotebookScopeIds = useMemo(
     () => (selectedNotebookId && !selectedTag ? getNotebookScopeIds(notebooks, selectedNotebookId, showDescendantNotes) : []),
     [notebooks, selectedNotebookId, selectedTag, showDescendantNotes]

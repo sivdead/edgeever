@@ -33,8 +33,13 @@ export const writeMobileImageCompressionEnabled = (enabled: boolean) => AsyncSto
 
 // Parent notebooks keep listing their sub-notebooks' notes unless turned off.
 export const readMobileShowDescendantNotes = async () => {
-  const value = await AsyncStorage.getItem(SHOW_DESCENDANT_NOTES_KEY);
-  return value !== "false";
+  try {
+    const value = await AsyncStorage.getItem(SHOW_DESCENDANT_NOTES_KEY);
+    return value !== "false";
+  } catch {
+    // A display preference must not leave all note queries disabled.
+    return true;
+  }
 };
 
 export const writeMobileShowDescendantNotes = (enabled: boolean) => AsyncStorage.setItem(SHOW_DESCENDANT_NOTES_KEY, enabled ? "true" : "false");
