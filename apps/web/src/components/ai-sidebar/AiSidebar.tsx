@@ -85,6 +85,8 @@ import { cn } from "@/lib/utils";
 import { CompanionQuestionForm } from "../CompanionQuestionForm";
 import { AiSidebarMessage } from "./AiSidebarMessage";
 import { AiSidebarLocalProcess } from "./AiSidebarLocalProcess";
+import { BuiltinAgentStatus } from "./BuiltinAgentStatus";
+import { InfographicSidebarSession, type InfographicSidebarController } from "./InfographicSidebarSession";
 
 const SIDEBAR_DEFAULT_WIDTH = 380;
 const sidebarThreadClassName = cn(
@@ -176,6 +178,7 @@ type AiSidebarProps = AiSidebarFocus & {
   beforeCompanionApply?: () => Promise<void>;
   onCompanionNotesChanged?: () => Promise<void>;
   onOpenCompanionNote?: (id: string, notebookId: string) => void;
+  infographic?: InfographicSidebarController | null;
 };
 
 const SELECTION_TURN_STORAGE = "edgeever.aiSidebar.selectionTurns";
@@ -349,7 +352,7 @@ function AiSidebarThreadMenu({
 
 const readLocalAdapter = (): { id: DesktopAcpAdapterId; path?: string } | null => {
   const id = readStorage(AI_SIDEBAR_ADAPTER_KEY);
-  if (id !== "codex" && id !== "antigravity" && id !== "grokBuild" && id !== "deepseekHarness" && id !== "piAgent" && id !== "workbuddyCn" && id !== "workbuddyIntl") return null;
+  if (id !== "codex" && id !== "claudeCode" && id !== "antigravity" && id !== "openClaw" && id !== "hermesAgent" && id !== "grokBuild" && id !== "deepseekHarness" && id !== "piAgent" && id !== "workbuddyCn" && id !== "workbuddyIntl") return null;
   const path = readStorage(AI_SIDEBAR_ADAPTER_PATH_KEY)?.trim();
   return id === "antigravity" && path ? { id, path } : { id };
 };
@@ -978,7 +981,12 @@ function AiSidebarSession({
       setLocalTurns((previous) => previous.map((turn) => turn.id === turnId && turn.status === "running"
         ? { ...turn, status: event.type === "error" ? "failed" : "completed" }
         : turn));
-      if (event.type === "error" && event.message) setError(event.message);
+      if (event.type === "error" && event.message) {
+        setError(event.message === "note_access_unavailable" ? t("aiAssistant.sidebar.noteAccessUnavailable")
+          : event.message === "needs_login" ? t(localAdapterId === "workbuddyCn" || localAdapterId === "workbuddyIntl"
+            ? "aiAssistant.sidebar.workbuddyLoginRequired" : "aiAssistant.sidebar.localLoginRequired")
+            : event.message === "agent_refused" ? t("aiAssistant.sidebar.agentRefused") : event.message);
+      }
       if (active.current?.requestId === event.requestId) {
         active.current = null;
         locked.current = false;
@@ -1526,14 +1534,14 @@ function AiSidebarSession({
                   {localAdapterId ? t(`aiAssistant.agentSource.${localAdapterId}`) : t("aiAssistant.sidebar.localStatus")}
                 </span>
               </TooltipTrigger>
-              <TooltipContent>
-                {localAdapterId ? t(`aiAssistant.agentSource.${localAdapterId}`) : t("aiAssistant.sidebar.localStatus")}
+              <TooltipContent className="max-w-xs">
+                <p>{localAdapterId ? t(`aiAssistant.agentSource.${localAdapterId}`) : t("aiAssistant.sidebar.localStatus")}</p>
+                <p className="mt-1">{t("aiAssistant.agentSource.localHint")}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        ) : null}
+        ) : <BuiltinAgentStatus />}
         <Button
-          className={source === "local" ? undefined : "ml-auto"}
           type="button"
           size="icon-sm"
           variant="ghost"
@@ -1840,7 +1848,15 @@ export function AiSidebar(props: AiSidebarProps) {
               </Tooltip>
             </TooltipProvider>
           ) : null}
-          <AiSidebarSession {...props} addFilesRef={addFilesRef} onStopReady={onStopReady} />
+          {props.infographic ? (
+            <InfographicSidebarSession
+              session={props.infographic}
+              noteTitle={props.noteTitle}
+              onOpenChange={onOpenChange}
+            />
+          ) : (
+            <AiSidebarSession {...props} addFilesRef={addFilesRef} onStopReady={onStopReady} />
+          )}
         </div>
       </m.aside>
     </>
