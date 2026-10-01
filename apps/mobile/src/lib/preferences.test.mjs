@@ -23,3 +23,24 @@ test("descendant preference defaults safely when native storage fails", () => {
   `], { stdout: "pipe", stderr: "pipe" });
   expect({ exitCode: result.exitCode, stderr: result.stderr.toString() }).toEqual({ exitCode: 0, stderr: "" });
 });
+
+test("descendant preference keeps the stored value when saving fails", () => {
+  const result = Bun.spawnSync([process.execPath, "--eval", `
+    import { mock } from "bun:test";
+    import { strict as assert } from "node:assert";
+    let stored = "false";
+    let writesFail = false;
+    mock.module("@react-native-async-storage/async-storage", () => ({ default: {
+      getItem: async () => stored,
+      setItem: async (_key, value) => { if (writesFail) throw new Error("disk full"); stored = value; },
+    } }));
+    const { readMobileShowDescendantNotes, saveMobileShowDescendantNotes } =
+      await import(${JSON.stringify(new URL("./preferences.ts", import.meta.url).href)});
+    assert.deepEqual(await saveMobileShowDescendantNotes(true), { value: true, saved: true });
+    writesFail = true;
+    // The UI must keep showing what the next launch will restore, not the unsaved choice.
+    assert.deepEqual(await saveMobileShowDescendantNotes(false), { value: true, saved: false });
+    assert.equal(await readMobileShowDescendantNotes(), true);
+  `], { stdout: "pipe", stderr: "pipe" });
+  expect({ exitCode: result.exitCode, stderr: result.stderr.toString() }).toEqual({ exitCode: 0, stderr: "" });
+});

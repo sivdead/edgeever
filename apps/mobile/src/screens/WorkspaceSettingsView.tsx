@@ -92,6 +92,7 @@ export const SettingsView = ({
   onShowDescendantNotesChange,
   onSignOut,
   showDescendantNotes,
+  showDescendantNotesSaveFailed,
 }: {
   currentUser: AuthUser | null;
   imageCompressionEnabled: boolean;
@@ -102,6 +103,7 @@ export const SettingsView = ({
   onShowDescendantNotesChange: (enabled: boolean) => void;
   onSignOut: () => void;
   showDescendantNotes: boolean;
+  showDescendantNotesSaveFailed: boolean;
 }) => {
   const { resolvedTheme, toggleTheme } = useMobileTheme();
   const { translate } = useMobileLocale();
@@ -229,6 +231,7 @@ export const SettingsView = ({
                 <View style={styles.preferenceText}>
                   <Text style={styles.settingsRowTitle}>显示子笔记本中的笔记</Text>
                   <Text style={styles.settingsRowDescription}>开启后，打开父笔记本会同时列出所有子笔记本中的笔记；关闭后只列出直接放在该笔记本中的笔记。</Text>
+                  {showDescendantNotesSaveFailed ? <Text accessibilityRole="alert" style={styles.errorText}>无法保存“显示子笔记本中的笔记”设置，请稍后重试</Text> : null}
                 </View>
                 <View style={styles.settingsSwitchStart}>
                   <Switch accessibilityLabel={translate("是否在父笔记本中显示子笔记本中的笔记")} onValueChange={onShowDescendantNotesChange} value={showDescendantNotes} />

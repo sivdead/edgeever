@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryKey } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryKey } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import type { ListMemosResponse, MemoFilterMode, MemoSortMode } from "@edgeever/client";
 import {
@@ -27,7 +27,7 @@ import {
   readMobileShowDescendantNotes,
   readMobileMemoListDensity,
   writeMobileImageCompressionEnabled,
-  writeMobileShowDescendantNotes,
+  saveMobileShowDescendantNotes,
   writeMobileMemoListDensity,
   type MobileLocalePreference,
   type MobileMemoListDensity,
@@ -95,6 +95,7 @@ import {
   applyOptimisticMemoToCache,
   createOptimisticMemo,
   findCachedMemoDetail,
+  memoQueriesShareScope,
   type MobileMemoUpdatePayload,
 } from "./workspace-memo-cache";
 import { refreshWorkspaceThemeStyles, styles } from "./workspace-styles";
@@ -161,6 +162,7 @@ export const WorkspaceScreen = ({
   const [imageCompressionEnabled, setImageCompressionEnabled] = useState(true);
   // Null until the stored value loads, so lists never flash the wrong notebook scope.
   const [showDescendantNotes, setShowDescendantNotes] = useState<boolean | null>(null);
+  const [showDescendantNotesSaveFailed, setShowDescendantNotesSaveFailed] = useState(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -259,8 +261,9 @@ export const WorkspaceScreen = ({
     [activeNotebookId, notebooks, selectedTag, showDescendantNotes]
   );
 
+  const memosQueryKey = ["mobile", "memos", memoView, activeNotebookId, memoFilterMode, memoSortMode, activeNotebookScopeIds, selectedTag, "paged-v3"] as const;
   const memosQuery = useInfiniteQuery({
-    queryKey: ["mobile", "memos", memoView, activeNotebookId, memoFilterMode, memoSortMode, activeNotebookScopeIds, selectedTag, "paged-v3"],
+    queryKey: memosQueryKey,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       if (!client) {
@@ -279,11 +282,13 @@ export const WorkspaceScreen = ({
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor ? Number(lastPage.nextCursor) : undefined,
     enabled: Boolean(client) && showDescendantNotes !== null,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery && memoQueriesShareScope("memos", previousQuery.queryKey, memosQueryKey) ? previousData : undefined,
   });
 
+  const searchQueryKey = ["mobile", "search", memoView, debouncedSearchText, activeNotebookId, memoFilterMode, memoSortMode, activeNotebookScopeIds, selectedTag, "paged-v5"] as const;
   const searchQuery = useInfiniteQuery({
-    queryKey: ["mobile", "search", memoView, debouncedSearchText, activeNotebookId, memoFilterMode, memoSortMode, activeNotebookScopeIds, selectedTag, "paged-v5"],
+    queryKey: searchQueryKey,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       if (!client) {
@@ -303,7 +308,8 @@ export const WorkspaceScreen = ({
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor ? Number(lastPage.nextCursor) : undefined,
     enabled: Boolean(client && debouncedSearchText.length > 0) && showDescendantNotes !== null,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery && memoQueriesShareScope("search", previousQuery.queryKey, searchQueryKey) ? previousData : undefined,
   });
 
   const memoDetailQuery = useQuery({
@@ -766,9 +772,10 @@ export const WorkspaceScreen = ({
     void writeMobileImageCompressionEnabled(enabled);
   };
 
-  const handleShowDescendantNotesChange = (enabled: boolean) => {
-    setShowDescendantNotes(enabled);
-    void writeMobileShowDescendantNotes(enabled);
+  const handleShowDescendantNotesChange = async (enabled: boolean) => {
+    const result = await saveMobileShowDescendantNotes(enabled);
+    setShowDescendantNotes(result.value);
+    setShowDescendantNotesSaveFailed(!result.saved);
   };
 
   const optimisticallyRemoveMemoIds = async (memoIds: string[]): Promise<MobileMemoListCacheSnapshot> => {
@@ -1280,7 +1287,8 @@ export const WorkspaceScreen = ({
           imageCompressionEnabled={imageCompressionEnabled}
           onImageCompressionChange={handleImageCompressionChange}
           showDescendantNotes={showDescendantNotes ?? true}
-          onShowDescendantNotesChange={handleShowDescendantNotesChange}
+          showDescendantNotesSaveFailed={showDescendantNotesSaveFailed}
+          onShowDescendantNotesChange={(enabled) => void handleShowDescendantNotesChange(enabled)}
           onSignOut={signOut}
         />
       ) : null}

@@ -44,6 +44,17 @@ export const readMobileShowDescendantNotes = async () => {
 
 export const writeMobileShowDescendantNotes = (enabled: boolean) => AsyncStorage.setItem(SHOW_DESCENDANT_NOTES_KEY, enabled ? "true" : "false");
 
+// Resolves to the value that is actually stored, so the list never shows a scope
+// that would silently revert on the next launch.
+export const saveMobileShowDescendantNotes = async (enabled: boolean) => {
+  try {
+    await writeMobileShowDescendantNotes(enabled);
+    return { value: enabled, saved: true };
+  } catch {
+    return { value: await readMobileShowDescendantNotes(), saved: false };
+  }
+};
+
 export const readMobileLocalePreference = async (): Promise<MobileLocalePreference> => {
   const value = await AsyncStorage.getItem(LOCALE_PREFERENCE_KEY);
   return isMobileLocalePreference(value) ? value : "system";

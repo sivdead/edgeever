@@ -31,6 +31,8 @@ describe("mobile locale translation", () => {
     expect(translateMobileText(hint, "ja"))
       .toBe("サブノートブックにはまだ 5 件のノートがあります。サブノートブックを開くか、設定で「サブノートブックのノートを表示」をオンにしてください。");
     expect(translateMobileText("本级暂无笔记", "en-US")).toBe("No notes directly in this notebook");
+    expect(translateMobileText("无法保存“显示子笔记本中的笔记”设置，请稍后重试", "en-US"))
+      .toBe("Could not save the \"Show notes from sub-notebooks\" setting. Please try again.");
   });
 
   test("prefers specific shared templates over broader mobile-only templates", () => {
