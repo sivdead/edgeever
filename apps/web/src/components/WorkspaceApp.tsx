@@ -3547,7 +3547,18 @@ export const WorkspaceApp = ({
                           onSaveAsTemplate={handleSaveAsTemplate}
                           onToggleDesktopFocusMode={toggleDesktopFocusMode}
                           onOpenExecutionCenter={handleOpenExecutionCenter}
-                          
+                          aiAssistantOpenToken={noteAiAssistantOpenToken}
+                          shortcutSettings={shortcutSettings}
+                          companionAvailable={authRequired && Boolean(user) && !demoMode}
+                          beforeCompanionApply={async () => {
+                            const { assertCompanionChangesSynced } = await import("@/lib/companion-actions");
+                            await assertCompanionChangesSynced(localDataScope);
+                          }}
+                          onCompanionNotesChanged={async () => {
+                            const result = await refreshWorkspaceFromServer("manual");
+                            if ("skipped" in result && result.skipped) throw new Error("Workspace refresh was skipped.");
+                          }}
+                          onOpenCompanionNote={handleOpenPluginNote}
                         />
                       ) : selectedMemo && selectedInfographicNote ? (
                         <InfographicEditorPane
@@ -3565,6 +3576,7 @@ export const WorkspaceApp = ({
                           onToggleDesktopFocusMode={toggleDesktopFocusMode}
                           aiAssistantOpenToken={noteAiAssistantOpenToken}
                           shortcutSettings={shortcutSettings}
+                          onOpenCompanionNote={handleOpenPluginNote}
                           onSaved={async (memo) => {
                             await putLocalMemo(localDataScope, memo);
                             cacheMemoDetail(queryClient, memo, memoView);
@@ -3579,8 +3591,21 @@ export const WorkspaceApp = ({
                         <TableEditorPane
                           key={selectedMemo.id}
                           memo={selectedMemo}
+                          notebooks={notebooks}
                           repository={repository}
                           readOnly={memoView === "trash" || selectedMemo.isDeleted}
+                          aiAssistantOpenToken={noteAiAssistantOpenToken}
+                          shortcutSettings={shortcutSettings}
+                          companionAvailable={authRequired && Boolean(user) && !demoMode}
+                          beforeCompanionApply={async () => {
+                            const { assertCompanionChangesSynced } = await import("@/lib/companion-actions");
+                            await assertCompanionChangesSynced(localDataScope);
+                          }}
+                          onCompanionNotesChanged={async () => {
+                            const result = await refreshWorkspaceFromServer("manual");
+                            if ("skipped" in result && result.skipped) throw new Error("Workspace refresh was skipped.");
+                          }}
+                          onOpenCompanionNote={handleOpenPluginNote}
                           onBackToList={() => {
                             clearPendingCreatedMemo();
                             setActivePane("memos");
