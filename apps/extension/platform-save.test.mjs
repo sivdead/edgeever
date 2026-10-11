@@ -234,6 +234,18 @@ test("queued social menu clips freeze each clicked post before a later right-cli
  await Promise.race([Promise.all([first,second]),new Promise(r=>setTimeout(r,50))]);
 });
 
+for(const action of ['toolbar','menu']) test(`Bluesky ${action} saves rendered link destinations without hidden text`,async()=>{
+ const h=harness({platform:'bluesky',prepare:doc=>{
+  doc.querySelector('[data-word-wrap="1"]').innerHTML='<span hidden>HIDDEN TITLE SECRET</span>Read <a href="https://example.test/complete-article?id=123">example.test/complete...</a><span aria-hidden="true">HIDDEN BODY SECRET</span>';
+ }});
+ const response=await h[action]();if(action==='toolbar')expect(response.ok).toBe(true);
+ expect(h.calls.creates).toHaveLength(1);
+ const memo=h.calls.creates[0];
+ expect(memo.title).toBe('Read example.test/complete...');
+ expect(memo.contentMarkdown).toContain('[example.test/complete...](https://example.test/complete-article?id=123)');
+ expect(memo.contentMarkdown).not.toContain('SECRET');
+});
+
 
 for(const [platform,pageUrl,selector] of [
  ['medium-article','https://scottbatson.dev/example','article'],

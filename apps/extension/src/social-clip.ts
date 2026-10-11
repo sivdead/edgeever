@@ -43,6 +43,24 @@ const paragraphs = (doc: Document, value: string) => {
 };
 const plainSocialMarkdown = (doc: Document, value: string, base: string) =>
   platformHtmlMarkdown(paragraphs(doc,value),base).replace(/[<>]/g,(char)=>`\\${char}`);
+/** Normalize text newlines in a detached body before shared Markdown conversion. */
+const socialBodyMarkdown = (doc: Document, body: Element, base: string) => {
+  const visit = (node: Node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType !== 3) { visit(child); continue; }
+      const value = child.textContent || '';
+      if (!/[\r\n]/.test(value)) continue;
+      const fragment = doc.createDocumentFragment();
+      value.split(/\r?\n/).forEach((line,index) => {
+        if (index) fragment.appendChild(doc.createElement('br'));
+        fragment.appendChild(doc.createTextNode(line.trimEnd()));
+      });
+      child.parentNode?.replaceChild(fragment,child);
+    }
+  };
+  visit(body);
+  return platformHtmlMarkdown(body,base).replace(/[ \t]+\n/g,'\n');
+};
 const postLinkUrl = (link: Element, base: string) => {
   const href=(link.getAttribute("href") || "").trim();
   return href.startsWith("/") || href.startsWith("https://") ? safePlatformUrl(href,base) : "";
@@ -140,13 +158,19 @@ export const readBluesky = (doc: Document, target: PlatformTarget): PlatformRead
   const post = card.querySelector('[data-testid="contentHider-post"]') || card;
   const body = post.querySelector('[data-testid="postText"], [data-word-wrap="1"]');
   if (post.closest('[hidden], [aria-hidden="true"]') || body?.closest('[hidden], [aria-hidden="true"]')) return {ok:false,reason:"unreadable"};
-  const content = text(entry?.text) || body?.textContent || "";
+  const bodyCopy = body?.cloneNode(true) as Element | undefined;
+  bodyCopy?.querySelectorAll('script, style, noscript, template, [hidden], [aria-hidden="true"]')
+    .forEach((node)=>node.remove());
+  // Rendered text owns the links and readability; SEO text must not restore
+  // descendants hidden by the current page, including in the note title.
+  const content = bodyCopy ? bodyCopy.textContent || "" : text(entry?.text);
   const copy = post.cloneNode(true) as Element;
   copy.querySelectorAll('button, [data-testid="userAvatarImage"], svg').forEach((node)=> {
     if(node.tagName.toLowerCase() === "button" && node.querySelector('img[src*="/img/feed_"]')) node.replaceWith(...Array.from(node.childNodes));
     else node.remove();
   });
-  const parts = [content ? plainSocialMarkdown(doc, content, target.url) : ""];
+  const parts = [bodyCopy ? socialBodyMarkdown(doc,bodyCopy,target.url).replace(/[<>]/g,(char)=>`\\${char}`)
+    : content ? plainSocialMarkdown(doc,content,target.url) : ""];
   // Feed cards have no post SEO data; their exact timestamp permalink and
   // visible body are sufficient. A collection count still guards hidden images.
   const visibleImages=blueskyImages(post,target.url);
@@ -343,21 +367,7 @@ const linkedinBodyMarkdown = (doc: Document, body: Element, base: string) => {
     for (const strong of Array.from(link.querySelectorAll('strong'))) strong.replaceWith(...Array.from(strong.childNodes));
   }
   // Public cards use text newlines; SDUI uses <br>. Feed both to Turndown alike.
-  const visit = (node: Node) => {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType !== 3) { visit(child); continue; }
-      const value = child.textContent || '';
-      if (!/[\r\n]/.test(value)) continue;
-      const fragment = doc.createDocumentFragment();
-      value.split(/\r?\n/).forEach((line,index) => {
-        if (index) fragment.appendChild(doc.createElement('br'));
-        fragment.appendChild(doc.createTextNode(line.trimEnd()));
-      });
-      child.parentNode?.replaceChild(fragment,child);
-    }
-  };
-  visit(clean);
-  return platformHtmlMarkdown(clean,base).replace(/[ \t]+\n/g,'\n');
+  return socialBodyMarkdown(doc,clean,base);
 };
 export const readLinkedin = (doc: Document, target: PlatformTarget): PlatformRead => {
   const card = socialPostCard(doc,target);

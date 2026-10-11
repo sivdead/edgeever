@@ -160,6 +160,43 @@ test('Bluesky feed uses the visible exact post and keeps the sampled quote and i
  const d=fixture('bluesky-feed');const r=readSocial(d,platformTarget('https://bsky.app/profile/bsky.app/post/3mxhdhodv222n'));
  expect(r.ok).toBe(true);expect(r.clip.title).toBe('a masterclass in alt text');expect(r.clip.markdown).toContain('Mr. Joshua');expect(r.clip.markdown).toContain('Lil bone people');expect(r.clip.markdown).not.toContain('minesweeper');expect(r.clip.publishedAt.precision).toBe('relative');
 });
+test('Bluesky feed retains the sampled Minesweeper link destination',()=>{
+ const r=readSocial(fixture('bluesky-feed'),platformTarget('https://bsky.app/profile/mikelacher.bsky.social/post/3mxepywf4ec2j'));
+ expect(r.ok).toBe(true);
+ expect(r.clip.markdown).toContain('[minesweeper.mikelacher.com](https://minesweeper.mikelacher.com/)');
+});
+test('Bluesky rendered links keep full destinations and line breaks with or without SEO text',()=>{
+ for(const seo of [true,false]) {
+  const d=fixture('bluesky');if(!seo)Array.from(d.querySelectorAll('script')).forEach(n=>n.remove());
+  const body=d.querySelector('[data-word-wrap="1"]');
+  body.innerHTML='First line\n\nRead <a href="https://example.test/complete-article?id=123">example.test/complete...</a>\n<a href="javascript:alert(1)">Unsafe link</a>';
+  body.appendChild(d.createTextNode('\nLiteral <script>alert(1)</script> **words**'));
+  const original=body.outerHTML,r=readSocial(d,platformTarget(socialSamples.bluesky.url));
+  expect(r.ok).toBe(true);expect(r.clip.title).toBe('First line');
+  expect(r.clip.markdown).toContain('[example.test/complete...](https://example.test/complete-article?id=123)');
+  expect(r.clip.markdown).toContain('First line\n\nRead');
+  expect(r.clip.markdown).toContain('Unsafe link');expect(r.clip.markdown).not.toContain('javascript:');
+  expect(r.clip.markdown).not.toContain('<script>');expect(r.clip.markdown).toContain('\\*\\*words\\*\\*');
+  expect(body.outerHTML).toBe(original);
+ }
+});
+test('Bluesky hidden descendants stay out of both title and body with or without SEO text',()=>{
+ for(const seo of [true,false]) {
+  const d=fixture('bluesky');if(!seo)Array.from(d.querySelectorAll('script')).forEach(n=>n.remove());
+  const body=d.querySelector('[data-word-wrap="1"]');
+  body.innerHTML='<span hidden>HIDDEN TITLE SECRET</span><p>Visible text.</p><div aria-hidden="true"><span>HIDDEN BODY SECRET</span><a href="https://example.test/hidden">Hidden link</a></div>';
+  const original=body.outerHTML,r=readSocial(d,platformTarget(socialSamples.bluesky.url));
+  expect(r.ok).toBe(true);expect(r.clip.title).toBe('Visible text.');
+  expect(r.clip.markdown).toContain('Visible text.');expect(r.clip.markdown).not.toContain('SECRET');
+  expect(r.clip.markdown).not.toContain('https://example.test/hidden');expect(body.outerHTML).toBe(original);
+ }
+});
+test('Bluesky hidden-only text does not become readable through SEO fallback',()=>{
+ const d=fixture('bluesky'),script=d.querySelector('script'),schema=JSON.parse(script.textContent);
+ schema.image=[];script.textContent=JSON.stringify(schema);Array.from(d.querySelectorAll('img')).forEach(n=>n.remove());
+ d.querySelector('[data-word-wrap="1"]').innerHTML='<span hidden>Hidden text.</span><span aria-hidden="true">Also hidden.</span>';
+ expect(readSocial(d,platformTarget(socialSamples.bluesky.url))).toEqual({ok:false,reason:'unreadable'});
+});
 test('fragment and empty links cannot impersonate the target post',()=>{
  const d=fixture('bluesky');const target=platformTarget('https://bsky.app/profile/other.test/post/3mhgg5ja5gc2w');
  expect(readSocial(d,target)).toEqual({ok:false,reason:'unreadable'});
