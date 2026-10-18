@@ -506,3 +506,9 @@ for(const invalid of ['old-post','missing-props','stale-marker'])test(`Jike Web 
  expect(detailState(d,url,'6715e824d9dc81724c2ec74d')).toBeNull();
  expect(readJike(d,url)).toEqual({ok:false,reason:'changed'});
 });
+
+test('Jike Web mobile mentions already containing @ match the same public post text',()=>{
+ const d=fixture('jike-web-detail');
+ for(const mention of d.querySelectorAll('[class*="_mentionUser_"]'))mention.textContent='@'+mention.textContent.trim();
+ const r=readJike(d,jikeWebUrl);expect(r.ok).toBe(true);expect(r.clip.markdown).toContain('凌空小鱼儿');expect(r.clip.markdown).not.toContain('@@');
+});

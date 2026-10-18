@@ -34,7 +34,10 @@ const bodyInCard = (card: Element) => Array.from(card.querySelectorAll(".text,.i
 const comparisonText = (body: Element, base: string) => {
   const comparison=body.cloneNode(true) as Element;
   for (const n of Array.from(comparison.querySelectorAll('button,[role="button"]'))) n.remove();
-  for (const mention of Array.from(comparison.querySelectorAll('[class*="_mentionUser_"]'))) mention.textContent = `@${platformText(mention)}`;
+  for (const mention of Array.from(comparison.querySelectorAll('[class*="_mentionUser_"]'))) {
+    const text=platformText(mention);
+    mention.textContent = text.startsWith("@") ? text : `@${text}`;
+  }
   // Share pages shorten URL labels to hostnames. Mentions remain source text.
   for (const link of Array.from(comparison.querySelectorAll("a[href]"))) {
     const href=safePlatformUrl(link.getAttribute("href") || "",base);
