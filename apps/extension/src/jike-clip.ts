@@ -51,7 +51,7 @@ const pictureUrls = (picture: JikePicture | undefined, base: string) => picture 
   .filter((value): value is string=>typeof value === "string").map(value=>safePlatformUrl(value,base)).filter(Boolean) : [];
 const webImageIdentity = (src: string) => {
   const url=new URL(src);
-  if (url.origin === "https://cdnv2.ruguoapp.com" && /^\?imageMogr2\//.test(url.search) && !url.search.includes("&")) url.search="";
+  if (url.origin === "https://cdnv2.ruguoapp.com" && url.search.startsWith("?imageMogr2/") && !url.search.includes("&")) url.search="";
   return url.href;
 };
 const removeJikeControls = (body: Element, images: Element[]) => {

@@ -375,3 +375,5 @@ Firefox／ego lite 各自策略探测覆盖三来源及十一图片地址：14 �
 按[贡献指南](../CONTRIBUTING.zh-CN.md)，从官方 `upstream/main` 的 `df22f55d` 建立 `fix/issue-588-browser-acceptance`，向 Fork 同名贡献分支提交；不推送部署 `main`。原补丁及十个新增文件迁移前后完全一致，无冲突；无关移动端 `.gitignore` 不纳入提交。
 
 以新基线执行锁文件安装后，完整非 E2E **3,760 项通过、0 失败**（3719 + 17 + 24，含484项扩展测试）；一个 Windows 专属用例按 macOS 条件跳过。根／移动端类型检查、Web／Chromium／Firefox 构建、Firefox lint 和 diff 检查通过，lint 保留7条既有依赖警告。本次未新增实站操作，不扩大各历史构建的运行时覆盖。
+
+PR 首轮 CI 在项目根 `bun run lint` 发现即刻 CDN 查询前缀正则不符合 `startsWith` 规则；已改为等价字符串前缀判断。补跑根 lint、484 项扩展测试、根／移动端类型检查和 Web 构建通过。Firefox 插件 lint 与根 lint 是不同检查，不能互相替代；远端 CI 状态以 PR 检查结果为准。
