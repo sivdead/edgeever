@@ -110,7 +110,7 @@ Use dedicated exclusion reads/writes rather than growing site settings JSON. Rea
 
 ### 3.4 Minimum indexing boundary
 
-Only unprotected sites with explicit permission are indexable. Protected initial HTML always contains generic sharing information. Indexing defaults off, JSON APIs remain non-indexable, and pages/APIs retain `private, no-store` and `no-referrer`. Remove conflicting fixed `/share/*` headers and client tags only for eligible notebook sites, without widening other sharing types.
+Only alias pages of unprotected sites with explicit permission are indexable. Token pages retain the complete shared noindex policy and canonical points to the alias when configured. Protected initial HTML always contains generic sharing information. Indexing defaults off, JSON APIs remain non-indexable, and pages/APIs retain `private, no-store` and `no-referrer`. The client preserves server robots until the selected article request completes; errors and non-indexable pages use the complete shared policy. Other sharing types retain their existing policy.
 
 Initial server HTML contains escaped title, description, canonical URL, and social metadata. Inaccessible articles return a real unavailable status and no-index headers. Use an available logo as the card image or existing brand resources; do not build a screenshot-generation service.
 

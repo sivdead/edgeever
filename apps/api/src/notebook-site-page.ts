@@ -33,7 +33,7 @@ export const renderNotebookSitePage = async (
     if (status === 200) {
       title = `${note?.title?.trim() || site.name} · EdgeEver`;
       description = note?.excerpt || site.name;
-      indexable = site.settings.allowIndexing;
+      indexable = alias && site.settings.allowIndexing;
       const base = site.site_slug ? `/s/${encodeURIComponent(site.site_slug)}` : `/share/notebook/${encodeURIComponent(site.token)}`;
       canonical = `${url.origin}${base}${memoId ? `/${encodeURIComponent(memoId)}` : ""}`;
       image = site.settings.logoUrl || image;

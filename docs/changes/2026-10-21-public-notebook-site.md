@@ -2,7 +2,7 @@
 
 [简体中文](2026-10-21-public-notebook-site.zh-CN.md)
 
-Requirements: [Issue #591](https://github.com/tianma-if/edgeever/issues/591). Design: [site plan](../public-notebook-site-plan.md). Baseline: official `5d1a0661`. This document records final behavior, boundaries and acceptance.
+Requirements: [Issue #591](https://github.com/tianma-if/edgeever/issues/591). Design: [site plan](../public-notebook-site-plan.md). Baseline: official `e15792d0`. This document records final behavior, boundaries and acceptance.
 
 ## Problem, objective and risk
 
@@ -23,7 +23,7 @@ Scope includes public Web reading, author sharing, shared API/client types, migr
 | C07 | Notebook sites reuse local light/dark/system preference across article/code/diagrams. Code shows language, full-source copying, and collapse; images open a lightbox on click with gesture zoom; reuse diagram fitting/fullscreen. | Actual article/code/image/diagram interactions; preserve individual-note sharing behavior. |
 | C08 | Internal links show on-demand HoverCard previews on hover/focus. Use Tooltip instead of native title. Invalid/excluded targets disclose no titles/excerpts or independent-share bypasses. | Actual hover/focus, rejected APIs, and filtered links. |
 | C09 | Logo failures fall back to the current icon; render header links/footer. `/s/:slug/:memoId?` resolves only the token and reuses canonical links, password cookies, and revocation. | Canonical/alias links, unlocking, collisions, and invalidated access. |
-| C10 | Indexing defaults off and requires no password plus explicit opt-in. Render server HTML head/canonical/OG/Twitter; protected pages remain generic. Invalid/excluded articles return unavailable status and noindex. Preserve private/no-store and no-referrer; JSON APIs always remain noindex. Setting/rotating passwords disables indexing; clearing does not re-enable it. Reject enabling indexing with a password. | Raw HTML/headers, escaping, password changes, privacy, and the shared page service through Cloudflare/Docker entries. |
+| C10 | Indexing defaults off and requires an alias URL, no password and explicit opt-in. Token pages always retain the complete shared noindex policy and canonical points to the alias when configured. Render server HTML head/canonical/OG/Twitter; protected pages remain generic. Invalid/excluded articles return unavailable status and the complete noindex policy. The client preserves server robots while identity, directory or the selected article is pending, and uses the complete shared policy after errors or when indexing is disabled. Preserve private/no-store and no-referrer; JSON APIs always remain noindex. Setting/rotating passwords disables indexing; clearing does not re-enable it. Reject enabling indexing with a password. | Raw HTML/headers for alias and Token roots/articles, canonical links, escaping, password changes and privacy; browser regression with delayed successful/failed articles and full noindex readback. The shared page service serves Cloudflare/Docker entries. |
 
 
 | ID | Author interaction and supporting APIs | Acceptance |
@@ -38,6 +38,7 @@ Scope includes public Web reading, author sharing, shared API/client types, migr
 ## Boundaries retained
 
 - Preserve note content, global state, tag semantics, sync, author hierarchy/order, and access rules for independent note shares and public forms.
+- Preserve upstream in-note heading-link navigation when integrating the shared reader; keep site outlines and single-click image previews. Verify the existing heading-anchor tests and the browser article click path.
 - Preserve existing tokens, password hashes/ciphertext/encryption root, authorization cookie paths and password APIs. Saving settings does not rotate passwords.
 - No manual drag ordering, review/scheduled publication, snapshots, full article SSR, sitemap, uploads or screenshot service. Names derive from root notebooks; descriptions derive from visible excerpts.
 - Reuse existing 30-second refresh, themes and viewers. Add no polling mechanism or event bus, and promise neither retrieval of downloaded content nor immediate removal from external indexes.
@@ -53,7 +54,7 @@ R01–R13 and the final behavior above are implemented. Product changes map to t
 | Public scope/search | Actual Hono routes and database checks cover workspaces, live subtrees, exclusions, resources, links, homepages, previews, Chinese/body search, tags and pagination; parent exclusions preserve independent child access. |
 | Author to visitor | Homepage/settings UI saves followed by anonymous readback; original-note exclude/restore; invalid-home fallback/restoration, read error/retry and late revocation responses. |
 | Reading | Local long articles cover H1–H4, duplicate headings, fragment reload/scrollspy, code copy/collapse, themes, images and diagrams. Drawers/dialogs fit a 390px viewport without horizontal overflow. |
-| HTML/cache | Local Cloudflare Worker and self-hosted Bun entries verify metadata, canonical URLs, escaping, indexing, passwords and excluded-article 404s. Public pages bypass PWA app-shell caching, and loading state preserves server indexing metadata. |
+| HTML/cache | Local Cloudflare Worker and self-hosted Bun entries verify metadata, canonical URLs, escaping, indexing, passwords and excluded-article 404s. Public pages bypass PWA app-shell caching. C10 regression checks confirm that Token roots/articles keep the complete noindex policy and alias canonical, and delayed successful/failed article requests preserve server robots until completion. |
 | Cloudflare | Independent Worker/D1/R2 deployment; 35 real HTTP checks cover Chinese search, R2, exclusions, parent/child independence, homepages, metadata, passwords and unlock cookies. Browser acceptance covers login, share settings, original-note controls and main reading interactions. |
 
 Reproducible required checks:
@@ -61,11 +62,15 @@ Reproducible required checks:
 ```sh
 bun test apps/api/src/notebook-share-routes.test.mjs tests/note-sharing-menu.test.ts packages/shared/src/i18n/catalog.test.mjs apps/web/src/components/dialogs/ShareQrCode.test.mjs
 bun test tests/deployment-entrypoints.test.ts
+bun test apps/web/src/lib/editor-heading-anchor.test.mjs
+bunx playwright test tests/e2e/public-notebook-indexing.spec.ts
 bun run typecheck
 bun run typecheck:mobile
 bun run build:web
 ```
 
 These relevant checks passed, together with targeted lint and `git diff --check`. Old-route migration and browser flows are separate acceptance steps; a build or one successful HTTP response does not replace them. Reuse unaffected verification.
+
+C10 corrections are complete: 30 notebook-sharing API tests and 3 browser regressions pass. The browser tests use real sharing APIs and an injected HTML head for Vite's bare app shell; actual local Worker responses also confirm headers, robots and canonical for alias, excluded-article and Token pages. Upstream integration preserves heading-link capture alongside site image controls; 7 existing heading-anchor tests and the browser heading-jump/single-click image flow pass. Changes are limited to metadata policy, reader integration, regression coverage and matching documentation; no data, permission, migration or deployment changes are included.
 
 Remaining limits: CF acceptance uses a separate new database rather than a production upgrade. The self-hosted entry was exercised, but Docker containers, Android/iOS native devices, real search/social crawlers and concurrent writers remain unverified. Articles retain SPA rendering without full SSR or sitemap; indexing outcomes are not guaranteed. The corresponding PR/workflows track merge, CI and release status.

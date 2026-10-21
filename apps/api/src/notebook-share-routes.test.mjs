@@ -10,6 +10,7 @@ import {
 import { hashPassword } from "./auth-crypto";
 import { registerPublicShareRoutes } from "./share-routes";
 import { renderNotebookSitePage } from "./notebook-site-page";
+import { PUBLIC_PAGE_ROBOTS } from "@edgeever/shared/public-page-headers";
 
 const databases = [];
 afterEach(() => databases.splice(0).forEach((db) => db.close()));
@@ -325,15 +326,39 @@ describe("public notebook site controls", () => {
     expect(html).not.toContain("<script>secret()");
     expect(html).toContain('rel="canonical" href="https://example.org/s/docs/memo_child"');
     expect(html).toContain('property="og:description" content="A &amp; B &quot;quote&quot;"');
+    for (const suffix of ["", "/memo_child"]) {
+      const tokenPage = await render(`/share/notebook/${token}${suffix}`);
+      expect(tokenPage.status).toBe(200);
+      expect(tokenPage.headers.get("X-Robots-Tag")).toBe(PUBLIC_PAGE_ROBOTS);
+      const tokenHtml = await tokenPage.text();
+      expect(tokenHtml).toContain(`<meta name="robots" content="${PUBLIC_PAGE_ROBOTS}">`);
+      expect(tokenHtml).toContain(`rel="canonical" href="https://example.org/s/docs${suffix}"`);
+    }
     await manage(f, "/memos/memo_child", { excluded: true });
     const hidden = await render("/s/docs/memo_child");
     expect(hidden.status).toBe(404);
+    expect(hidden.headers.get("X-Robots-Tag")).toBe(PUBLIC_PAGE_ROBOTS);
     expect(await hidden.text()).not.toContain("secret()");
     await manage(f, "", { passwordProtected: true });
     const protectedPage = await render("/s/docs");
-    expect(protectedPage.headers.get("X-Robots-Tag")).toContain("noindex");
+    expect(protectedPage.headers.get("X-Robots-Tag")).toBe(PUBLIC_PAGE_ROBOTS);
     expect(await protectedPage.text()).not.toContain("secret()");
     expect(await render("/share/individual-token")).toBeNull();
+  });
+
+  test("Token pages without an alias remain noindex after opting in", async () => {
+    const f = fixture();
+    await manage(f, "/site", { settings: { allowIndexing: true } });
+    for (const suffix of ["", "/memo_child"]) {
+      const url = `https://example.org/share/notebook/${token}${suffix}`;
+      const response = await renderNotebookSitePage(new Request(url), f.environment.storage.db,
+        async () => new Response("<html><head></head><body></body></html>"));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("X-Robots-Tag")).toBe(PUBLIC_PAGE_ROBOTS);
+      const html = await response.text();
+      expect(html).toContain(`<meta name="robots" content="${PUBLIC_PAGE_ROBOTS}">`);
+      expect(html).toContain(`rel="canonical" href="${url}"`);
+    }
   });
 });
 

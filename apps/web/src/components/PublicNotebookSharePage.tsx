@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { isSharePasswordError, PublicSharePasswordForm, PublicShareArticle } from "./PublicSharePage";
 import { PublicNotebookSite } from "./PublicNotebookSite";
 import { withEnvironmentTitlePrefix } from "@/lib/environment-title";
+import { PUBLIC_PAGE_ROBOTS } from "@edgeever/shared/public-page-headers";
 
 export const PublicNotebookSharePage = () => {
   const { t } = useTranslation();
@@ -49,11 +50,12 @@ export const PublicNotebookSharePage = () => {
   );
   useEffect(() => {
     // The server head already applies the visibility/indexing policy. Keep it
-    // while the client is still resolving this page's identity or directory.
-    if ((slug && identity.isPending) || (token && directory.isPending)) return;
+    // until the identity, directory and selected article have resolved.
+    if ((slug && identity.isPending) || (token && directory.isPending) ||
+      (share && memoId && (memo.isPending || memo.isFetching))) return;
     const robots = document.createElement("meta");
     robots.name = "robots";
-    robots.content = share?.settings?.allowIndexing && !directory.isError && !memo.isError ? "index,follow" : "noindex,nofollow,noarchive";
+    robots.content = slug && share?.settings?.allowIndexing && !directory.isError && !memo.isError ? "index,follow" : PUBLIC_PAGE_ROBOTS;
     const existingRobots = [...document.head.querySelectorAll<HTMLMetaElement>('meta[name="robots"]')];
     const existingContents = existingRobots.map((meta) => meta.content);
     existingRobots.forEach((meta) => { meta.content = robots.content; });
@@ -71,7 +73,7 @@ export const PublicNotebookSharePage = () => {
       existingRobots.forEach((meta, index) => { meta.content = existingContents[index]; });
       document.title = previous;
     };
-  }, [note?.title, share?.name, share?.settings?.allowIndexing, slug, token, identity.isPending, directory.isPending, directory.isError, memo.isError, t]);
+  }, [note?.title, share, slug, token, memoId, identity.isPending, directory.isPending, directory.isError, memo.isPending, memo.isFetching, memo.isError, t]);
   if ((slug && identity.isPending) || (Boolean(token) && directory.isPending))
     return (
       <main className="flex min-h-[100dvh] items-center justify-center">

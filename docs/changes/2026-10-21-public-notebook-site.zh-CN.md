@@ -2,7 +2,7 @@
 
 [English](2026-10-21-public-notebook-site.md)
 
-需求见 [Issue #591](https://github.com/tianma-if/edgeever/issues/591)，设计见[公开站点方案](../public-notebook-site-plan.zh-CN.md)。基线为官方 `5d1a0661`。本文记录最终行为、边界与验收方式。
+需求见 [Issue #591](https://github.com/tianma-if/edgeever/issues/591)，设计见[公开站点方案](../public-notebook-site-plan.zh-CN.md)。基线为官方 `e15792d0`。本文记录最终行为、边界与验收方式。
 
 ## 问题、目标与风险
 
@@ -23,7 +23,7 @@
 | C07 | 笔记本站点复用本机浅色/深色/系统偏好；正文、代码、图表与画板适配。代码展示语言、复制完整源码及折叠；图片单击灯箱和手势缩放；复用画板适应窗口及全屏。 | 实际正文、代码、图片和画板操作；保留单篇分享原行为。 |
 | C08 | 本站内部笔记链接悬停或聚焦时按需预览，复用 HoverCard；提示使用 Tooltip，不增加原生 title。失效/排除目标不给标题摘要，也不跳到独立分享绕过。 | 实际悬停/聚焦、API 拒绝及过滤链接读回。 |
 | C09 | Logo 失败回退原图标；展示页眉外链和页脚。别名 `/s/:slug/:memoId?` 只解析 Token，原 Token 链接可用，共用密码 Cookie 和撤销边界。 | 原链接、别名、密码解锁、别名冲突及失效访问流程。 |
-| C10 | 默认禁止收录；只有无密码且显式允许时输出可收录的服务端 HTML head/canonical/OG/Twitter。密码页面只输出通用信息；无效/排除文章返回不可用状态和 noindex。页面和 API 保持 private/no-store、no-referrer，JSON API 始终 noindex。设置/重置密码关闭收录，清除密码不重开；有密码时拒绝开启收录。 | 原始 HTML/响应头、转义、密码修改和隐私检查；共享页面服务经 Cloudflare 与 Docker 入口调用。 |
+| C10 | 默认禁止收录；只有别名页面无密码且显式允许时可收录。Token 页面始终使用共用的完整 noindex 策略，已配置别名时 canonical 指向别名。输出服务端 HTML head/canonical/OG/Twitter，密码页面只输出通用信息；无效/排除文章返回不可用状态和完整 noindex 策略。前端在身份、目录或选中文章请求未完成时保留服务端 robots；失败或禁止收录时使用共用的完整策略。页面和 API 保持 private/no-store、no-referrer，JSON API 始终 noindex。设置/重置密码关闭收录，清除密码不重开；有密码时拒绝开启收录。 | 别名和 Token 首页/文章的原始 HTML/响应头、canonical、转义、密码修改及隐私检查；浏览器延迟正文成功/失败回归并读回完整 noindex。共享页面服务经 Cloudflare 与 Docker 入口调用。 |
 
 
 | 编号 | 作者交互及配套接口 | 验收方式 |
@@ -38,6 +38,7 @@
 ## 保持不变的边界
 
 - 保留笔记内容、全局状态、标签语义、同步协议、作者层级和笔记本顺序，以及独立单篇分享和公开表单的访问规则。
+- 整合共享阅读组件时保留上游文内标题链接跳转，同时保留站点大纲和图片单击预览；通过已有标题锚点测试及浏览器正文点击流程验证。
 - 保留已有Token、密码散列/密文及加密根、授权Cookie路径和密码接口；配置保存不旋转密码。
 - 不增加手动拖拽排序、审核/定时发布、快照、完整正文SSR、sitemap、资产上传或截图生成服务。名称来自根笔记本，描述来自可见内容摘要。
 - 复用现有30秒刷新、主题及查看器；不增加轮询机制或事件总线，不承诺收回已下载内容或即时清除外部索引。
@@ -53,7 +54,7 @@ R01～R13及上表最终行为均已有实现，实际产品diff与清单对应�
 | 公开边界与检索 | 实际Hono路由和数据库验证工作区、实时子树、排除、资源、链接、首页、预览、中文/正文搜索、标签与分页；父站点排除不影响独立子站点。 |
 | 作者到访客 | 界面选择首页及保存配置后匿名读回；原笔记开关排除/恢复；无效首页回退与恢复、读取失败/重试及迟到撤销响应均验证。 |
 | 阅读交互 | 本地长文覆盖H1～H4、重复标题、刷新定位、滚动高亮、代码复制/折叠、主题、图片及画板操作；390px抽屉和弹窗无横向溢出。 |
-| HTML与缓存 | Cloudflare本地Worker及自托管Bun入口验证元数据、canonical、转义、收录、密码及排除文章404。公开页绕过PWA应用壳缓存，加载状态不覆盖服务端收录标记。 |
+| HTML与缓存 | Cloudflare本地Worker及自托管Bun入口验证元数据、canonical、转义、收录、密码及排除文章404。公开页绕过PWA应用壳缓存。C10回归确认Token首页/文章保持完整noindex及别名canonical；正文成功/失败请求延迟期间保留服务端robots。 |
 | Cloudflare | 独立Worker/D1/R2实例部署成功；35项真实HTTP检查覆盖中文搜索、R2资源、排除、父子独立、首页、元数据、密码门禁及解锁Cookie；浏览器完成登录、分享配置、原页开关和主要阅读流程。 |
 
 可复现的必要检查：
@@ -61,11 +62,15 @@ R01～R13及上表最终行为均已有实现，实际产品diff与清单对应�
 ```sh
 bun test apps/api/src/notebook-share-routes.test.mjs tests/note-sharing-menu.test.ts packages/shared/src/i18n/catalog.test.mjs apps/web/src/components/dialogs/ShareQrCode.test.mjs
 bun test tests/deployment-entrypoints.test.ts
+bun test apps/web/src/lib/editor-heading-anchor.test.mjs
+bunx playwright test tests/e2e/public-notebook-indexing.spec.ts
 bun run typecheck
 bun run typecheck:mobile
 bun run build:web
 ```
 
 上述相关检查已通过；改动文件定向lint及 `git diff --check` 通过。旧路由迁移和浏览器验收另按上表执行，不能用构建或单个HTTP成功代替。未受影响的验证直接复用。
+
+C10修正已完成：30项笔记本分享API测试和3项浏览器回归通过。浏览器测试使用真实分享API，为Vite的空白应用壳注入HTML head；实际本地Worker响应另行确认别名、排除文章及Token页面的响应头、robots和canonical。与上游整合时保留标题链接捕获及站点图片操作；7项已有标题锚点测试、浏览器标题跳转和单击图片流程通过。变更仅涉及元数据策略、阅读组件整合、对应回归及配套文档；没有数据、权限、迁移或部署变更。
 
 剩余限制：CF是独立新库验收，没有执行生产实例升级；自托管入口已验证，但Docker容器、Android/iOS原生真机、真实搜索/社交爬虫及并发竞争尚未验收。正文继续由SPA渲染，没有完整SSR或sitemap，不能保证搜索收录结果。发布、合并和CI状态以对应PR及工作流为准。
