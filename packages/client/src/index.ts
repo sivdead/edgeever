@@ -33,6 +33,10 @@ import type {
   MemoShare,
   NotebookShare,
   PublicNotebookShare,
+  NotebookSiteUpdate,
+  NotebookSiteSearchResult,
+  NotebookSiteExclusions,
+  NotebookSiteMemoPreview,
   ManagedMemoShare,
   PublicTableForm,
   TableFormSettings,
@@ -754,6 +758,18 @@ export const createEdgeEverClient = (options: EdgeEverClientOptions = {}) => {
 
     getPublicNotebookShare: (token: string) =>
       request<{ share: PublicNotebookShare }>(`/api/public/notebook-shares/${encodeURIComponent(token)}`),
+    resolveNotebookSite: (slug: string) => request<{ token: string }>(`/api/public/notebook-sites/${encodeURIComponent(slug)}/resolve`),
+    searchPublicNotebook: (token: string, input: { q?: string; tag?: string; cursor?: string | null }) => {
+      const params = new URLSearchParams();
+      if (input.q) params.set("q", input.q);
+      if (input.tag) params.set("tag", input.tag);
+      if (input.cursor) params.set("cursor", input.cursor);
+      return request<NotebookSiteSearchResult>(`/api/public/notebook-shares/${encodeURIComponent(token)}/search?${params}`);
+    },
+    previewPublicNotebookMemo: (token: string, memoId: string) => request<{ memo: NotebookSiteMemoPreview }>(`/api/public/notebook-shares/${encodeURIComponent(token)}/memos/${encodeURIComponent(memoId)}/preview`),
+    updateNotebookSite: (id: string, input: NotebookSiteUpdate) => request<{ share: NotebookShare }>(`/api/v1/notebooks/${encodeURIComponent(id)}/share/site`, { method: "PATCH", body: JSON.stringify(input) }),
+    listNotebookSiteExclusions: (id: string, cursor?: string | null) => request<NotebookSiteExclusions>(`/api/v1/notebooks/${encodeURIComponent(id)}/share/excluded-memos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
+    setNotebookSiteExclusion: (id: string, memoId: string, excluded: boolean) => request<{ memoId: string; excluded: boolean }>(`/api/v1/notebooks/${encodeURIComponent(id)}/share/memos/${encodeURIComponent(memoId)}`, { method: "PATCH", body: JSON.stringify({ excluded }) }),
     getPublicNotebookMemo: (token: string, memoId: string) =>
       request<{ share: PublicMemoShare; memoUrls: Record<string, string> }>(`/api/public/notebook-shares/${encodeURIComponent(token)}/memos/${encodeURIComponent(memoId)}`),
     unlockPublicNotebookShare: (token: string, password: string) =>

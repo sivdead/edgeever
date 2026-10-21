@@ -4,7 +4,7 @@
 
 Related: [Issue #591](https://github.com/tianma-if/edgeever/issues/591). Updated: 2026-10-21.
 
-Status: implementation plan after whole-plan ablation. The implementation branch starts at official commit `5d1a0661`; historical experiments used `4ad082b5`. Local model experiments do not establish browser, deployment, or search-engine acceptance.
+Status: R01–R13 are implemented locally with acceptance limited to the checks in the [implementation checklist](changes/2026-10-21-public-notebook-site.md). The implementation branch starts at official `5d1a0661`; historical experiments used `4ad082b5`. Historical model experiments and product acceptance are recorded separately. No push or deployment has occurred.
 
 ## 1. Conclusion and changes from the previous plan
 
@@ -20,7 +20,7 @@ These behavior differences from the previous plan are explicit:
 - Reuse the device appearance preference. The public site and same-origin app share that local preference without writing to the author's account.
 - Keep server metadata and the indexing switch in the first version; defer complete article SSR and sitemap. This reduces non-JavaScript body crawlability and proactive discovery; equivalent SEO outcomes have not been established.
 
-The benefits remain better reading, body search, and site presentation. Principal risks remain incomplete public-visibility filtering, incorrect indexing policy, and rollback to an older server that ignores new policies. This delivery contains design documents, scripts, and results only; product runtime code, product migrations, and deployments are unchanged.
+The benefits remain better reading, body search, and site presentation. Principal risks remain incomplete public-visibility filtering, incorrect indexing policy, and rollback to an older server that ignores new policies. Delivery now includes the plan, retained historical experiments, and product implementation. Migrations have run only in local acceptance environments.
 
 ## 2. Minimum implementation of the 13 requirements
 
@@ -81,7 +81,7 @@ An invalid `homeMemoId` is one bounded pointer. After moves, soft deletion, or p
 
 Apply partial configuration writes with database-side `json_patch`, preserving other fields, and reuse `updated_at`. Setting or rotating a password writes JSON `false` to `allowIndexing`; removing a password does not re-enable it. Preserve password hashes, ciphertext, tokens, and cookie paths.
 
-Reuse `memos`, `memo_contents`, `memo_tags`, `memo_search_documents`, `memos_fts`, and `resources`. Migrations currently end at `0071`; allocate the next number during implementation without reserving one now or editing executed files.
+Reuse `memos`, `memo_contents`, `memo_tags`, `memo_search_documents`, `memos_fts`, and `resources`. The plan baseline ended at `0071`; implementation adds `0072_public_notebook_sites.sql` without editing earlier migrations.
 
 ### 3.2 Six new API operations; reuse the rest
 
@@ -116,7 +116,7 @@ SPA body rendering is a tradeoff, not experimentally equivalent SEO. [Google doc
 
 ## 4. Whole-plan ablation evidence
 
-The following scripts and raw results remain historical comparisons for the previous tag-filtered, zero-new-table plan. This update changes documentation only without rerunning or rewriting experiments. The results do not establish verification of the current exclusion table, management endpoints, or UI.
+The following scripts and raw results remain historical comparisons for the previous tag-filtered, zero-new-table plan. They were neither rerun nor rewritten when explicit exclusions were selected or during implementation. They do not verify the current exclusion table, management endpoints, or UI; see the implementation checklist for product acceptance.
 
 Script: [public-notebook-site-plan-ablation.mjs](../scripts/public-notebook-site-plan-ablation.mjs). Raw results and 42 individual decisions: [public-notebook-site-plan-ablation.json](public-notebook-site-plan-ablation.json). Run `bun scripts/public-notebook-site-plan-ablation.mjs > docs/public-notebook-site-plan-ablation.json`.
 
@@ -146,7 +146,7 @@ The original decisions to remove per-note override storage and the exclusion end
 
 Retain the selected path for all 13 requirements, current-site per-note exclusions and management operations, live server access filtering, filtering before pagination, existing password protocols, alias uniqueness/resolution, lightweight previews, server metadata, and thin Cloudflare/Docker adapters. Full article SSR, sitemap, and standalone asset upload remain future capabilities, not features proven worthless.
 
-Real UI usability, actual password upgrades, remote D1, both runtime page handlers, crawler indexing, social-platform fetches, and concurrent contention remain unverified. Model checks do not establish product completion.
+These historical experiments did not verify real UI, password upgrades, page handling through both runtimes, remote D1, crawlers, or concurrency races. Subsequent implementation separately verified local UI, old-route migration compatibility, and both runtime entries. The implementation checklist records that coverage and its remaining limits; model checks do not extend those conclusions.
 
 ## 5. Implementation and minimum acceptance
 
