@@ -1,16 +1,16 @@
-# Issue 591 public notebook site change checklist
+# Issue 591 public notebook site implementation checklist
 
 [简体中文](2026-10-21-public-notebook-site.zh-CN.md)
 
-Authorization: the user requested a new branch, a plan commit, and implementation of that plan. See the [site plan](../public-notebook-site-plan.md). Branch `feat/public-notebook-site-591` starts at official `5d1a0661`; plan commit `ac3e02d1`. There were no other uncommitted changes before implementation.
+Requirements: [Issue #591](https://github.com/tianma-if/edgeever/issues/591). Design: [site plan](../public-notebook-site-plan.md). Baseline: official `5d1a0661`. This document records final behavior, boundaries and acceptance.
 
-## Problem and objective
+## Problem, objective and risk
 
-The site lacks body search, per-note exclusions, homepage selection, and branding settings. Implement R01–R13 using explicit exclusions scoped to each share, without using tags as draft status. Improve reading, discovery, content selection, and site presentation.
+Public sites need article navigation, body search, per-note exclusion, homepages and presentation settings. Implement R01–R13 with exclusions scoped independently to each share; tags retain classification semantics.
 
-Scope includes public Web reading, author share settings, shared API/client types, an additive database migration, and Cloudflare/Docker page entries. The worst outcome is disclosure of excluded notes or protected information. Once exclusions are enabled, rollback must retain filtering or revoke affected shares before using an older server. Remote migration, deployment, actual search-engine indexing, and social crawlers are outside local acceptance.
+Scope includes public Web reading, author sharing, shared API/client types, migration 0072, and Cloudflare/self-hosted page entries. The worst outcome is disclosure of excluded or password-protected content. After exclusions are enabled, rollback must retain filtering or first revoke affected shares; an older server that ignores the exclusion table is unsafe.
 
-## Allowed changes and acceptance
+## Allowed behavior and acceptance
 
 | ID | Allowed behavior | Acceptance |
 | --- | --- | --- |
@@ -25,37 +25,47 @@ Scope includes public Web reading, author share settings, shared API/client type
 | C09 | Logo failures fall back to the current icon; render header links/footer. `/s/:slug/:memoId?` resolves only the token and reuses canonical links, password cookies, and revocation. | Canonical/alias links, unlocking, collisions, and invalidated access. |
 | C10 | Indexing defaults off and requires no password plus explicit opt-in. Render server HTML head/canonical/OG/Twitter; protected pages remain generic. Invalid/excluded articles return unavailable status and noindex. Preserve private/no-store and no-referrer; JSON APIs always remain noindex. Setting/rotating passwords disables indexing; clearing does not re-enable it. Reject enabling indexing with a password. | Raw HTML/headers, escaping, password changes, privacy, and the shared page service through Cloudflare/Docker entries. |
 
+
+| ID | Author interaction and supporting APIs | Acceptance |
+| --- | --- | --- |
+| C11 | Notebook context/more menus consistently use Share notebook; directly shared notebooks keep their more button visible. Reopening reuses the token; settings retain the aggregate share entry. | Create, close and reopen from the original location; check token, copying and existing aliases. |
+| C12, C19, C23 | Site settings expand in Advanced settings within the share dialog, collapsed by default and preserving unsaved input across collapse. Reuse one settings form; `/notebooks/:notebookId/site` remains directly accessible, while normal sharing stays in place. No second content-management list. | Desktop/390px expansion, retained edits, save-to-anonymous readback, direct access and login boundaries; rerenders retain one password control. |
+| C13 | A separate homepage picker selects only notes visible in the current site; selection still requires saving. Invalid stored references show directory fallback; saving unrelated fields preserves an unchanged reference, allowing restoration when visible again. State-read failures show an error and retry. | Select/save, exclude homepage, save other fields, restore and delete; Escape closes only the picker and returns focus. |
+| C14–C15 | Author `GET /api/v1/notebooks/:id/share/memos` returns IDs, titles, notebook identity, exclusion state and a cursor, without bodies. Require user identity and an active current-workspace share. Filter keywords/state before pagination. Only all/public/excluded are accepted, default all, otherwise 400; limit defaults to 50 within 1–100, UI pages contain 20, ordered by ID cursor. | Chinese/body search, filtering before pagination, cross-page selection, authorization and inactive shares. Replace each page rather than accumulating list DOM. |
+| C16 | `GET /api/v1/memos/:id/notebook-sites` returns only valid direct/ancestor site names, IDs and exclusion states to current-workspace users. It creates no individual share and returns no token or password. | Valid/no sites, independent parent/child sites, moves, deleted ancestors, identity and workspace boundaries. |
+| C17–C18 | The original note dialog and list context menu share per-site controls. Disable writes while pending, update on server confirmation, and retain prior state on failure; reads show retry. Hide empty controls without sites, and omit them for trash/local unsynced notes. Opening the dialog no longer creates an individual link; creation is explicit. Existing links, passwords, copying and revocation remain available. Revocation callbacks affect only the original note. | Original-page exclude/restore and anonymous readback, parent/child independence, consistent entries, failure/retry, explicit individual creation/revocation, delayed revocation, narrow viewports and keyboards. |
+
 ## Boundaries retained
 
-- Keep global note states, tag semantics, content, sync, author hierarchy, and notebook order. Preserve individual-note-share and public-form access rules.
-- Preserve tokens, password hashes/ciphertext/encryption roots, cookie paths, and password-only operations; settings saves do not rotate passwords.
-- No drag ordering, review/scheduling, publication snapshots, complete article SSR, sitemap, asset uploads, or screenshot service.
-- Reuse the current 30-second refresh and invalidation handling; no new polling, event bus, or cache. No promise to recall downloaded content or immediately remove external indexes.
-- Share business logic across Cloudflare/Docker with thin static-template/infrastructure entries. Do not change native apps, desktop runtimes, versions, release/deployment workflows, or dependencies.
-- No push, deployment, or release. Current authorization covers local plan commit and implementation.
+- Preserve note content, global state, tag semantics, sync, author hierarchy/order, and access rules for independent note shares and public forms.
+- Preserve existing tokens, password hashes/ciphertext/encryption root, authorization cookie paths and password APIs. Saving settings does not rotate passwords.
+- No manual drag ordering, review/scheduled publication, snapshots, full article SSR, sitemap, uploads or screenshot service. Names derive from root notebooks; descriptions derive from visible excerpts.
+- Reuse existing 30-second refresh, themes and viewers. Add no polling mechanism or event bus, and promise neither retrieval of downloaded content nor immediate removal from external indexes.
+- Cloudflare and self-hosting share business logic with thin runtime entries. Wrangler only adds public-page Worker routing and updates the existing configuration fingerprint; instance binding rules, native runtimes, versions and release workflows remain unchanged. No new dependencies.
 
-## Implementation and completion audit
+## Completion check and validation
 
-R01–R13 are implemented, with C01–C10 checked in both directions against the actual diff. There are no feature changes outside the checklist. Historical ablation scripts/results remain unchanged and do not count as product tests.
+R01–R13 and the final behavior above are implemented. Product changes map to this checklist. Main evidence:
 
-| Checklist | Implementation and acceptance evidence |
+| Scope | Completed acceptance |
 | --- | --- |
-| C01 | Only migration `0072`: two columns, one two-column exclusion table, and indexes. Actual `5d1a0661` routes with migrations `0001`–`0071` created legacy data, a hashed password, and an unlock cookie. After migration, new routes retained the original URL, hash, and working cookie. Route tests cover defaults, collisions, cascades, and recreation. |
-| C02 | Shared strict schema, database-side `json_patch`, and a UTF-8 byte limit. Real author UI saves were read back through anonymous directory/page requests. Route tests cover invalid inputs, partial writes, invalidated homepages, and preserving passwords on settings saves. |
-| C03–C04 | Shared `publicTreeSql` / `visible_memos` enforce scope. Route tests cover exclusions/restores, resources, links, homepages, metadata, search, previews, pagination, Chinese/combined tags, workspace boundaries, and independent child shares. |
-| C05 | Browser flow covered settings, alias homepage, directory, and natural numeric ordering. Shortcut search found a body-only keyword and displayed highlighted excerpts; closing restored focus. Actual API tests cover tag filtering, pagination, and access denials. |
-| C06 | Long articles verified H1–H4, duplicate anchors, fragment reloads, scrollspy, and sticky headers. A 390 CSS-pixel viewport verified chapter/outline drawers, heading navigation, and no horizontal overflow. |
-| C07 | Browser checks covered actual light/dark colors, copy feedback, collapse/expand, image lightbox opening, and fitting/fullscreen/Escape on the same diagram. System theme was restored. Mermaid, properties, and lightbox zoom reuse existing components; physical-device gestures were not separately accepted. |
-| C08 | Real hover and keyboard focus displayed previews. API tests denied excluded previews; article links resolve only currently visible site targets. |
-| C09–C10 | Actual requests through local Cloudflare Worker and self-hosted Bun entries covered alias HTML, canonical URLs, escaping, indexing headers, excluded article 404, and revocation. Password pages remained generic; setting a password disabled indexing and clearing it left indexing off. The browser also verified failed-logo fallback, header links, and footer. |
+| Migration/compatibility | Real old routes and 0001–0071 data upgraded with 0072 retain tokens, password hashes and unlock cookies. Cover alias conflicts, defaults, cascades and share recreation. |
+| Public scope/search | Actual Hono routes and database checks cover workspaces, live subtrees, exclusions, resources, links, homepages, previews, Chinese/body search, tags and pagination; parent exclusions preserve independent child access. |
+| Author to visitor | Homepage/settings UI saves followed by anonymous readback; original-note exclude/restore; invalid-home fallback/restoration, read error/retry and late revocation responses. |
+| Reading | Local long articles cover H1–H4, duplicate headings, fragment reload/scrollspy, code copy/collapse, themes, images and diagrams. Drawers/dialogs fit a 390px viewport without horizontal overflow. |
+| HTML/cache | Local Cloudflare Worker and self-hosted Bun entries verify metadata, canonical URLs, escaping, indexing, passwords and excluded-article 404s. Public pages bypass PWA app-shell caching, and loading state preserves server indexing metadata. |
+| Cloudflare | Independent Worker/D1/R2 deployment; 35 real HTTP checks cover Chinese search, R2, exclusions, parent/child independence, homepages, metadata, passwords and unlock cookies. Browser acceptance covers login, share settings, original-note controls and main reading interactions. |
 
-Checks:
+Reproducible required checks:
 
-- `bun test apps/api/src/notebook-share-routes.test.mjs apps/web/src/lib/public-share-body.test.mjs packages/shared/src/sharing.test.mjs packages/shared/src/i18n/catalog.test.mjs`: 38 passed.
-- `bun test tests/deployment-entrypoints.test.ts`: 21 passed. Updated the existing configuration fingerprint for the Cloudflare route change; instance-specific configuration rejection remains in place, without changing deployment mechanisms.
-- `bun run typecheck`, `bun run typecheck:mobile`, and `bun run build:web`: all passed. Targeted lint of changed files and `git diff --check` passed.
-- Reviewed React structure, Hooks, keyboard/focus handling, and types. No dependencies, versions, or native runtimes changed.
+```sh
+bun test apps/api/src/notebook-share-routes.test.mjs tests/note-sharing-menu.test.ts packages/shared/src/i18n/catalog.test.mjs apps/web/src/components/dialogs/ShareQrCode.test.mjs
+bun test tests/deployment-entrypoints.test.ts
+bun run typecheck
+bun run typecheck:mobile
+bun run build:web
+```
 
-Acceptance covers local Cloudflare/D1 and the actual self-hosted entry, not a Docker container build/run, remote migrations, production deployment, real search/social crawlers, concurrency races, or Android/iOS devices. Articles retain SPA rendering without complete SSR or sitemap; these checks do not establish indexing outcomes. Local logs and screenshots remain at `/tmp/edgeever-591-*`.
+These relevant checks passed, together with targeted lint and `git diff --check`. Old-route migration and browser flows are separate acceptance steps; a build or one successful HTTP response does not replace them. Reuse unaffected verification.
 
-Delivery consists of a local branch with separate plan and implementation commits. Nothing has been pushed, deployed, or released. Rollback after exclusions are enabled still requires the visibility safeguards described above.
+Remaining limits: CF acceptance uses a separate new database rather than a production upgrade. The self-hosted entry was exercised, but Docker containers, Android/iOS native devices, real search/social crawlers and concurrent writers remain unverified. Articles retain SPA rendering without full SSR or sitemap; indexing outcomes are not guaranteed. The corresponding PR/workflows track merge, CI and release status.

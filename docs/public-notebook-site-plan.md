@@ -4,23 +4,23 @@
 
 Related: [Issue #591](https://github.com/tianma-if/edgeever/issues/591). Updated: 2026-10-21.
 
-Status: R01–R13 are implemented locally with acceptance limited to the checks in the [implementation checklist](changes/2026-10-21-public-notebook-site.md). The implementation branch starts at official `5d1a0661`; historical experiments used `4ad082b5`. Historical model experiments and product acceptance are recorded separately. No push or deployment has occurred.
+Status: R01–R13 are implemented. Site settings expand in the notebook share dialog; original-note controls manage per-site visibility, and a separate search picker selects the homepage. Local and independent Cloudflare acceptance are recorded in the [implementation checklist](changes/2026-10-21-public-notebook-site.md). Baseline: official `5d1a0661`. Historical ablations used `4ad082b5` and remain separate from product validation. Real crawlers, native devices and Docker containers remain unverified.
 
-## 1. Conclusion and changes from the previous plan
+## 1. Design choices and boundaries
 
 **Use an explicit per-note exclusion control for the current site: add one exclusion relation table and two columns on `notebook_shares`.** Authors select notes that visitors to this site must not access. Chapters keep existing or natural title/number order. Keep live sharing without editorial review, publication snapshots, or a site builder.
 
-The previous ablation chose the tag alternative allowed by the issue and recommended zero new tables. The user has now chosen explicit exclusions. The tag experiment establishes filtering feasibility, not that product decision. Retain the minimum relation table needed for per-note exclusion without restoring manual ordering or a general item-override model.
+Explicit per-site exclusion is a relation between a share and a note, independent of classification tags. Retain its minimum relation table without manual ordering or a general item-override model. Earlier tag-based experiments establish filtering feasibility but do not validate this exclusion model.
 
-These behavior differences from the previous plan are explicit:
+The resulting behavior and limits are:
 
-- Share settings provide a note selection list labeled “Exclude from this site”; deselecting restores inclusion. Exclusion applies only to the current share. Parent sites and independent child sites each have their own settings; note content, tags, and other shares retain their access rules. Start with no exclusions, preserving old public scope by default.
+- The original note-share dialog and note-list context menu provide per-site switches for excluding or restoring individual notes. Exclusion applies only to the current share. Parent sites and independent child sites each have their own settings; note content, tags, and other shares retain their access rules. Start with no exclusions, preserving old public scope by default.
 - Keep existing order and title/number order, without site-specific drag ordering or changes to notebook hierarchy.
 - Derive the site name from the root notebook and descriptions from a visible homepage or article excerpt; do not add independent name/description overrides.
 - Reuse the device appearance preference. The public site and same-origin app share that local preference without writing to the author's account.
 - Keep server metadata and the indexing switch in the first version; defer complete article SSR and sitemap. This reduces non-JavaScript body crawlability and proactive discovery; equivalent SEO outcomes have not been established.
 
-The benefits remain better reading, body search, and site presentation. Principal risks remain incomplete public-visibility filtering, incorrect indexing policy, and rollback to an older server that ignores new policies. Delivery now includes the plan, retained historical experiments, and product implementation. Migrations have run only in local acceptance environments.
+The benefits remain better reading, body search, and site presentation. Principal risks remain incomplete public-visibility filtering, incorrect indexing policy, and rollback to an older server that ignores new policies. Delivery now includes the plan, retained historical experiments, and product implementation. Migration compatibility was verified locally; a separate Cloudflare acceptance database also applied 0001–0072.
 
 ## 2. Minimum implementation of the 13 requirements
 
@@ -83,21 +83,23 @@ Apply partial configuration writes with database-side `json_patch`, preserving o
 
 Reuse `memos`, `memo_contents`, `memo_tags`, `memo_search_documents`, `memos_fts`, and `resources`. The plan baseline ended at `0071`; implementation adds `0072_public_notebook_sites.sql` without editing earlier migrations.
 
-### 3.2 Six new API operations; reuse the rest
+### 3.2 Eight new API operations; reuse the rest
 
 | Interface | Handling |
 | --- | --- |
 | Existing `GET /api/v1/notebooks/:id/share` | Include owner-managed site settings; do not add another site GET. |
 | Existing share create/revoke/password PATCH | Preserve meaning. Password PATCH continues to handle password operations only; configuration saves do not enter that branch. |
 | `PATCH /api/v1/notebooks/:id/share/site` | New. Save an alias and partial settings and return the merged configuration, without generating or clearing passwords. |
-| `GET /api/v1/notebooks/:id/share/excluded-memos` | New. Paginate excluded note IDs and titles accessible to the author for the share settings UI. Do not return complete bodies or put the list in site settings. |
+| `GET /api/v1/notebooks/:id/share/excluded-memos` | Retain the first-version endpoint for paginated excluded IDs/titles accessible to the author. The current UI does not display a separate exclusions list. Do not return complete bodies or put the list in site settings. |
+| `GET /api/v1/notebooks/:id/share/memos` | Retain filtered owner pagination, now used only by the included-note homepage picker without rendering a separate management list. |
+| `GET /api/v1/memos/:id/notebook-sites` | New. Return applicable live direct/ancestor site names, notebook IDs, and independent exclusion states for the current user's note, without bodies/passwords/tokens or creating shares. |
 | `PATCH /api/v1/notebooks/:id/share/memos/:memoId` | New. Accept `{ excluded: boolean }`. Idempotently insert the exclusion for `true` or delete it for `false`; return this note's exclusion state in this site. |
 | `GET /api/public/notebook-shares/:token/search` | New. Combine keyword/tag filtering and pagination; return titles, matching excerpts, and highlights. Build chapter paths from the existing directory. |
 | `GET /api/public/notebook-shares/:token/memos/:memoId/preview` | New. Fetch title/existing short excerpt on demand without reading complete bodies or adding previews to every initial directory entry. |
 | `GET /api/public/notebook-sites/:slug/resolve` | New, making the previously implicit identity operation explicit. Return only `{ token }`; then use canonical token APIs and password gates. Do not expose protected site names, bodies, or settings. |
 | Existing public directory/article/resource endpoints | Return required visitor settings and consistently enforce live scope and per-note exclusions. Do not expose the list of excluded notes to visitors. |
 
-Use dedicated exclusion reads and writes rather than growing site settings JSON. Still remove the general content-management GET, manual-order PUT, and redundant site GET. Existing unlock cookies remain scoped to canonical token API paths, which aliases continue to use without changing the password protocol.
+Use dedicated exclusion reads/writes rather than growing site settings JSON. Read accurate states for the current note's applicable sites without scanning directories or partially loaded exclusion pages. Do not add a general item-override model, manual-order PUT, or redundant site GET. Existing unlock cookies remain scoped to canonical token API paths, which aliases continue to use without changing the password protocol.
 
 ### 3.3 Service boundaries that remain necessary
 
@@ -113,6 +115,14 @@ Only unprotected sites with explicit permission are indexable. Protected initial
 Initial server HTML contains escaped title, description, canonical URL, and social metadata. Inaccessible articles return a real unavailable status and no-index headers. Use an available logo as the card image or existing brand resources; do not build a screenshot-generation service.
 
 SPA body rendering is a tradeoff, not experimentally equivalent SEO. [Google documentation](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) describes JavaScript rendering and notes that not every crawler executes JavaScript; eligible initial responses must not start with noindex and rely on client removal. Put [Open Graph](https://ogp.me/) metadata in the initial head. A [sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview) can improve discovery, but no measured crawler need establishes it for this iteration, so defer it. Do not promise that every article is or will be indexed.
+
+### 3.5 Author sharing and site management
+
+Notebook context and more menus consistently use “Share notebook.” Directly shared notebooks keep the more button visible. Reopening reuses the original URL/token, with copying, password controls, and Advanced settings that expand in place. Personal settings retain an overview entry. Advanced settings start collapsed and contain homepage, logo, navigation, ordering, and indexing configuration. Collapsing/reopening retains unsaved input. The share dialog has no note management list.
+
+Per-note controls appear in the original note-share dialog and note-list context submenu as “Show in the ‘name’ site.” Parent and child sites have distinct switches, and changes apply immediately without affecting other sites or individual-note shares. Read errors offer retry; failed writes retain the original state. Opening the dialog no longer creates an individual-note share automatically: authors explicitly click “Create individual note link.” Existing links retain copying, passwords, and revocation.
+
+Settings save explicitly. The separate homepage picker searches included notes, supports directory home, and returns to the share dialog when closed. It replaces20 rows per page and supports body-keyword search without a second management list. The historical `/notebooks/:notebookId/site` address retains direct access and refresh, while the share dialog no longer navigates there. This revision adds no tables or columns.
 
 ## 4. Whole-plan ablation evidence
 

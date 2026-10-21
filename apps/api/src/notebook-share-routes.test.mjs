@@ -175,6 +175,75 @@ describe("public notebook site controls", () => {
     expect((await f.request("/memos/memo_child/preview")).status).toBe(200);
   });
 
+  test("original-note controls list live ancestor sites with independent exclusions and no new shares", async () => {
+    const f = fixture();
+    await f.app.request("/api/v1/notebooks/child/share", { method: "POST" }, f.environment);
+    const sites = (id = "memo_child", init = {}) => f.app.request(`/api/v1/memos/${id}/notebook-sites`, init, f.environment);
+    const response = await sites();
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect((await response.json()).sites).toEqual([
+      { notebookId: "child", notebookName: "child", excluded: false },
+      { notebookId: "root", notebookName: "root", excluded: false },
+    ]);
+    await manage(f, "/memos/memo_child", { excluded: true });
+    expect((await (await sites()).json()).sites).toEqual([
+      { notebookId: "child", notebookName: "child", excluded: false },
+      { notebookId: "root", notebookName: "root", excluded: true },
+    ]);
+    expect((await f.request("/memos/memo_child")).status).toBe(404);
+    const childToken = f.db.query("SELECT token FROM notebook_shares WHERE notebook_id = 'child'").get().token;
+    expect((await f.app.request(`/api/public/notebook-shares/${childToken}/memos/memo_child`, {}, f.environment)).status).toBe(200);
+    expect((await (await sites("memo_grand")).json()).sites).toHaveLength(2);
+    expect(f.db.query("SELECT COUNT(*) AS count FROM memo_shares").get().count).toBe(1);
+    expect((await (await sites("memo_private")).json()).sites).toEqual([]);
+    f.db.run("UPDATE memos SET notebook_id = 'private' WHERE id = 'memo_child'");
+    f.db.run("UPDATE notebooks SET parent_id = 'foreign' WHERE id = 'private'");
+    expect((await (await sites()).json()).sites).toEqual([]);
+    f.db.run("UPDATE notebooks SET is_deleted = 1 WHERE id = 'child'");
+    expect((await (await sites("memo_grand")).json()).sites).toEqual([]);
+    for (const kind of ["none", "agent"])
+      expect((await sites("memo_grand", { headers: { "test-auth": kind } })).status).toBe(403);
+    for (const id of ["missing", "memo_other"])
+      expect((await sites(id)).status).toBe(404);
+    f.db.run("UPDATE memos SET is_deleted = 1 WHERE id = 'memo_grand'");
+    expect((await sites("memo_grand")).status).toBe(404);
+  });
+
+  test("owner content management filters before paging and reports exclusions beyond the first page", async () => {
+    const f = fixture();
+    for (let i = 0; i < 105; i++) f.addMemo(`bulk_${String(i).padStart(3, "0")}`, "child");
+    await manage(f, "/memos/bulk_075", { excluded: true });
+    await manage(f, "/memos/memo_child", { excluded: true });
+    const firstResponse = await manage(f, "/memos?limit=20");
+    expect(firstResponse.status).toBe(200);
+    const first = await firstResponse.json();
+    expect(first.memos).toHaveLength(20);
+    expect(first.nextCursor).toBe("bulk_019");
+    expect(first.memos.every((memo) => typeof memo.excluded === "boolean")).toBe(true);
+    expect(first.memos[0].contentJson).toBeUndefined();
+    const later = await (await manage(f, "/memos?limit=20&cursor=bulk_074")).json();
+    expect(later.memos[0]).toMatchObject({ id: "bulk_075", notebookId: "child", notebookName: "child", excluded: true });
+    const excluded = await (await manage(f, "/memos?visibility=excluded&limit=1")).json();
+    expect(excluded.memos.map((memo) => memo.id)).toEqual(["bulk_075"]);
+    const nextExcluded = await (await manage(f, `/memos?visibility=excluded&limit=1&cursor=${excluded.nextCursor}`)).json();
+    expect(nextExcluded.memos.map((memo) => memo.id)).toEqual(["memo_child"]);
+    expect(nextExcluded.nextCursor).toBeNull();
+    f.db.run("UPDATE memo_contents SET content_text = 'OwnerBodyNeedle 中文正文检索' WHERE memo_id = 'bulk_075'");
+    for (const q of ["OwnerBodyNeedle", "正文检索"]) {
+      const found = await (await manage(f, `/memos?q=${encodeURIComponent(q)}`)).json();
+      expect(found.memos.map((memo) => memo.id)).toEqual(["bulk_075"]);
+      const picker = await (await manage(f, `/memos?visibility=public&q=${encodeURIComponent(q)}`)).json();
+      expect(picker.memos).toHaveLength(0);
+    }
+    expect((await manage(f, "/memos?visibility=invalid")).status).toBe(400);
+    for (const kind of ["none", "agent"])
+      expect((await manage(f, "/memos", undefined, { headers: { "test-auth": kind } })).status).toBe(403);
+    expect((await f.app.request("/api/v1/notebooks/foreign/share/memos", {}, f.environment)).status).toBe(404);
+    f.db.run("UPDATE notebooks SET is_deleted = 1 WHERE id = 'root'");
+    expect((await manage(f, "/memos")).status).toBe(404);
+  });
+
   test("body and Chinese search filter before paging and combine with exact tags", async () => {
     const f = fixture();
     for (const id of ["memo_root", "memo_child", "memo_grand"]) {
@@ -207,7 +276,7 @@ describe("public notebook site controls", () => {
     const f = fixture();
     for (const id of ["memo_private", "memo_other", "missing"])
       expect((await manage(f, `/memos/${id}`, { excluded: true })).status).toBe(404);
-    for (const settings of [{ homeMemoId: "memo_private" }, { excludedTags: ["draft"] }, { logoUrl: "javascript:alert(1)" }, { headerLinks: [{ label: "x", url: "http://example.org" }] }, { footerText: "x".repeat(17_000) }])
+    for (const settings of [{ homeMemoId: "memo_private" }, { excludedTags: ["draft"] }, { logoUrl: "javascript:alert(1)" }, { logoUrl: "broken" }, { headerLinks: [{ label: "x", url: "broken" }] }, { headerLinks: [{ label: "x", url: "http://example.org" }] }, { footerText: "x".repeat(17_000) }])
       expect((await manage(f, "/site", { settings })).status).toBe(400);
     expect((await manage(f, "/site", { settings: { footerText: "ok" } }, { headers: { "content-type": "application/json", "test-auth": "agent" } })).status).toBe(403);
     expect((await manage(f, "/site", { settings: { footerText: "ok" } }, { headers: { "content-type": "application/json", "test-auth": "none" } })).status).toBe(403);

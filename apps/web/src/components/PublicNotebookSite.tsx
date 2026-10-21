@@ -154,21 +154,16 @@ const NoteTitle = ({ memo }: { memo: Memo }) => {
 
 const HomepageContents = ({
   sections,
-  matchingIds,
-  filtering,
   href,
   onNavigate,
 }: {
   sections: Section[];
-  matchingIds: ReadonlySet<string>;
-  filtering: boolean;
   href: (id: string) => string;
   onNavigate: () => void;
 }) => {
   const { t } = useTranslation();
-  const { children, visibleSections } = useMemo(() => {
+  const children = useMemo(() => {
     const children = new Map<string, Section[]>();
-    const visibleSections = new Set<string>();
     for (const section of sections) {
       const parent = section.path.at(-2);
       if (parent) {
@@ -176,15 +171,9 @@ const HomepageContents = ({
         siblings.push(section);
         children.set(parent.id, siblings);
       }
-      if (
-        !filtering ||
-        section.memos.some((memo) => matchingIds.has(memo.id))
-      ) {
-        for (const ancestor of section.path) visibleSections.add(ancestor.id);
-      }
     }
-    return { children, visibleSections };
-  }, [sections, matchingIds, filtering]);
+    return children;
+  }, [sections]);
   const renderContents = (section: Section, nested: boolean): ReactNode => (
     <ul
       className={cn(
@@ -193,7 +182,6 @@ const HomepageContents = ({
       )}
     >
       {section.memos
-        .filter((memo) => matchingIds.has(memo.id))
         .map((memo) => (
           <li key={memo.id} className="pl-1 marker:text-slate-400">
             <Link
@@ -209,7 +197,6 @@ const HomepageContents = ({
           </li>
         ))}
       {(children.get(section.notebook.id) ?? [])
-        .filter((child) => visibleSections.has(child.notebook.id))
         .map((child) => (
           <li
             key={child.notebook.id}
@@ -219,10 +206,7 @@ const HomepageContents = ({
             <span className="break-words font-semibold text-slate-900">
               {child.notebook.name}
             </span>
-            {(child.memos.some((memo) => matchingIds.has(memo.id)) ||
-              children
-                .get(child.notebook.id)
-                ?.some((item) => visibleSections.has(item.notebook.id))) &&
+            {(child.memos.length > 0 || children.has(child.notebook.id)) &&
               renderContents(child, true)}
           </li>
         ))}
@@ -286,7 +270,6 @@ export const PublicNotebookSite = ({ share, token, selectedId, children }: {
     return result;
   }, [share]);
   const notes = useMemo(() => sections.flatMap((section) => section.memos.map((memo) => ({ memo, section }))), [sections]);
-  const matchingIds = useMemo(() => new Set(notes.map(({ memo }) => memo.id)), [notes]);
   const index = notes.findIndex(({ memo }) => memo.id === selectedId);
   const current = notes[index];
   const navigate = () => setMobileOpen(false);
@@ -328,7 +311,7 @@ export const PublicNotebookSite = ({ share, token, selectedId, children }: {
       <div className="mx-auto flex max-w-[1600px] items-start">
         <aside id="notebook-site-sidebar" className={cn("sticky top-16 hidden h-[calc(100dvh-4rem)] w-72 shrink-0 flex-col border-r bg-card pt-6", sidebarOpen && "lg:flex")}>{contents}</aside>
         <main id="notebook-site-content" tabIndex={-1} className="min-w-0 flex-1 outline-none">
-          {!selectedId ? <div className="mx-auto max-w-5xl px-5 py-10 sm:px-10 sm:py-14"><p className="mb-4 text-sm text-muted-foreground">{t("sharing.siteNoteCount", { count: notes.length })}</p><h1 className="break-words text-3xl font-bold">{share.name}</h1>{!notes.length && <p className="mt-4">{t("sharing.notebookEmpty")}</p>}<HomepageContents sections={sections} matchingIds={matchingIds} filtering={false} href={href} onNavigate={navigate} /></div> : <>
+          {!selectedId ? <div className="mx-auto max-w-5xl px-5 py-10 sm:px-10 sm:py-14"><p className="mb-4 text-sm text-muted-foreground">{t("sharing.siteNoteCount", { count: notes.length })}</p><h1 className="break-words text-3xl font-bold">{share.name}</h1>{!notes.length && <p className="mt-4">{t("sharing.notebookEmpty")}</p>}<HomepageContents sections={sections} href={href} onNavigate={navigate} /></div> : <>
             <nav aria-label={t("sharing.siteBreadcrumb")} className="flex flex-wrap items-center gap-2 border-b px-5 py-3 text-xs text-muted-foreground"><Link to={root} onClick={navigate}>{t("sharing.siteHome")}</Link>{current?.section.path.map((notebook) => <span key={notebook.id} className="contents"><ChevronRight className="size-3" /><Link to={`${directory}#section-${notebook.id}`} onClick={navigate}>{notebook.name}</Link></span>)}{current && <span aria-current="page"><NoteTitle memo={current.memo} /></span>}</nav>
             {children}
             {current && <nav aria-label={t("sharing.siteReadingNavigation")} className="mx-auto grid max-w-4xl grid-cols-2 gap-4 border-t px-5 py-8 sm:px-10">

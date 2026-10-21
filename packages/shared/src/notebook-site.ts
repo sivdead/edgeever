@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const httpsUrl = z.string().url().refine((url) => new URL(url).protocol === "https:", "Use an HTTPS URL");
+const httpsUrl = z.url({ protocol: /^https$/ });
 export const NotebookSiteSettingsSchema = z.object({
   homeMemoId: z.string().nullable().default(null),
   logoUrl: httpsUrl.nullable().default(null),
@@ -44,3 +44,13 @@ export type NotebookSiteExclusions = {
   memos: Array<{ id: string; title: string | null }>;
   nextCursor: string | null;
 };
+
+export type NotebookSiteMemo = {
+  id: string;
+  title: string | null;
+  notebookId: string;
+  notebookName: string;
+  excluded: boolean;
+};
+export type NotebookSiteContents = { memos: NotebookSiteMemo[]; nextCursor: string | null };
+export type MemoNotebookSite = { notebookId: string; notebookName: string; excluded: boolean };

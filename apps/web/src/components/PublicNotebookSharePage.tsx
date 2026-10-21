@@ -48,6 +48,9 @@ export const PublicNotebookSharePage = () => {
     [token, memo.data?.memoUrls],
   );
   useEffect(() => {
+    // The server head already applies the visibility/indexing policy. Keep it
+    // while the client is still resolving this page's identity or directory.
+    if ((slug && identity.isPending) || (token && directory.isPending)) return;
     const robots = document.createElement("meta");
     robots.name = "robots";
     robots.content = share?.settings?.allowIndexing && !directory.isError && !memo.isError ? "index,follow" : "noindex,nofollow,noarchive";
@@ -68,7 +71,7 @@ export const PublicNotebookSharePage = () => {
       existingRobots.forEach((meta, index) => { meta.content = existingContents[index]; });
       document.title = previous;
     };
-  }, [note?.title, share?.name, share?.settings?.allowIndexing, directory.isError, memo.isError, t]);
+  }, [note?.title, share?.name, share?.settings?.allowIndexing, slug, token, identity.isPending, directory.isPending, directory.isError, memo.isError, t]);
   if ((slug && identity.isPending) || (Boolean(token) && directory.isPending))
     return (
       <main className="flex min-h-[100dvh] items-center justify-center">

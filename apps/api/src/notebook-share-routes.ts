@@ -6,6 +6,8 @@ import {
   compareNotebookSiteTitles,
   type NotebookSiteMemoPreview,
   type NotebookSiteSearchResult,
+  type NotebookSiteContents,
+  type MemoNotebookSite,
   PublicShareUnlockSchema,
   collectMemoLinkIds,
   accountNoteProseFromRow,
@@ -65,6 +67,62 @@ const validToken = (token: string) => /^[A-Za-z0-9_-]{43}$/.test(token);
 const pageSize = (value?: string) => Math.max(1, Math.min(100, Math.floor(Number(value) || 50)));
 
 export const registerNotebookShareRoutes = (app: Hono<AppEnv>) => {
+  app.get("/api/v1/memos/:id/notebook-sites", async (c) => {
+    const denied = requireUser(c);
+    if (denied) return denied;
+    const db = c.env.storage.db;
+    const memoId = c.req.param("id");
+    const workspaceId = getWorkspaceId(c);
+    const memo = await db.prepare("SELECT notebook_id FROM memos WHERE id = ? AND workspace_id = ? AND is_deleted = 0")
+      .bind(memoId, workspaceId).first<{ notebook_id: string | null }>();
+    if (!memo) return notFound(c, "Memo not found");
+    const rows = await db.prepare(`WITH RECURSIVE ancestors(id, parent_id, workspace_id, name) AS (
+      SELECT id, parent_id, workspace_id, name FROM notebooks WHERE id = ? AND workspace_id = ? AND is_deleted = 0
+      UNION
+      SELECT n.id, n.parent_id, n.workspace_id, n.name FROM notebooks n JOIN ancestors a
+        ON n.id = a.parent_id AND n.workspace_id = a.workspace_id WHERE n.is_deleted = 0
+    )
+    SELECT n.id AS notebookId, n.name AS notebookName,
+      EXISTS (SELECT 1 FROM notebook_share_excluded_memos e WHERE e.share_id = ns.id AND e.memo_id = ?) AS excluded
+    FROM ancestors n JOIN notebook_shares ns ON ns.notebook_id = n.id AND ns.workspace_id = n.workspace_id
+    ORDER BY n.id`).bind(memo.notebook_id, workspaceId, memoId)
+      .all<Omit<MemoNotebookSite, "excluded"> & { excluded: number }>();
+    c.header("Cache-Control", "private, no-store");
+    return c.json({ sites: rows.results.map((site) => ({ ...site, excluded: Boolean(site.excluded) })) });
+  });
+  app.get("/api/v1/notebooks/:id/share/memos", async (c) => {
+    const denied = requireUser(c);
+    if (denied) return denied;
+    const db = c.env.storage.db;
+    const share = await db.prepare(`${selectShareSql} AND ns.notebook_id = ?`)
+      .bind(getWorkspaceId(c), c.req.param("id")).first<ShareRow>();
+    if (!share) return notFound(c, "Active share not found");
+    const visibility = c.req.query("visibility") ?? "all";
+    if (!["all", "public", "excluded"].includes(visibility))
+      return apiError(c, "invalid_site_visibility", "Unknown content visibility filter", 400);
+    const limit = pageSize(c.req.query("limit"));
+    const query = c.req.query("q")?.trim() ?? "";
+    const excludedSql = "EXISTS (SELECT 1 FROM notebook_share_excluded_memos e WHERE e.share_id = t.share_id AND e.memo_id = m.id)";
+    const conditions = ["m.is_deleted = 0", "m.id > ?"];
+    const binds: unknown[] = [share.token, c.req.query("cursor") ?? ""];
+    if (visibility !== "all") conditions.push(`${visibility === "public" ? "NOT " : ""}${excludedSql}`);
+    if (query) {
+      const fts = toFtsQuery(query);
+      const like = `%${escapeLike(query)}%`;
+      conditions.push(`(m.title LIKE ? ESCAPE '\\' OR mc.content_text LIKE ? ESCAPE '\\' OR mc.content_markdown LIKE ? ESCAPE '\\'${fts ? " OR m.id IN (SELECT memo_id FROM memos_fts WHERE memos_fts MATCH ?)" : ""})`);
+      binds.push(like, like, like, ...(fts ? [fts] : []));
+    }
+    const rows = await db.prepare(`${publicTreeSql}
+      SELECT m.id, m.title, m.notebook_id AS notebookId, n.name AS notebookName, ${excludedSql} AS excluded
+      FROM memos m JOIN tree t ON m.notebook_id = t.id AND m.workspace_id = t.workspace_id
+      JOIN notebooks n ON n.id = m.notebook_id
+      ${query ? "LEFT JOIN memo_contents mc ON mc.memo_id = m.id" : ""}
+      WHERE ${conditions.join(" AND ")} ORDER BY m.id LIMIT ?`)
+      .bind(...binds, limit + 1).all<Omit<NotebookSiteContents["memos"][number], "excluded"> & { excluded: number }>();
+    const memos = rows.results.slice(0, limit).map((memo) => ({ ...memo, excluded: Boolean(memo.excluded) }));
+    c.header("Cache-Control", "private, no-store");
+    return c.json({ memos, nextCursor: rows.results.length > limit ? memos.at(-1)!.id : null } satisfies NotebookSiteContents);
+  });
   app.patch("/api/v1/notebooks/:id/share/site", zValidator("json", NotebookSiteUpdateSchema), async (c) => {
     const denied = requireUser(c);
     if (denied) return denied;
