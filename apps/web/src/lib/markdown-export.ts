@@ -1,5 +1,5 @@
 import type { MemoDetail, Notebook, Resource } from "@edgeever/shared";
-import { sanitizeExportPathSegment, uniqueExportName, buildNotebookExportPaths, buildNoteMarkdown, buildMarkdownFrontMatter, getExportResourceExtension, replaceExportResourceUrl } from "@edgeever/shared/backup-markdown";
+import { sanitizeExportPathSegment, uniqueExportName, buildNotebookExportPaths, buildNoteMarkdown, getExportResourceExtension, replaceExportResourceUrl } from "@edgeever/shared/backup-markdown";
 export { sanitizeExportPathSegment, uniqueExportName, buildNotebookExportPaths, buildNoteMarkdown, buildMarkdownFrontMatter, getExportResourceExtension, replaceExportResourceUrl } from "@edgeever/shared/backup-markdown";
 import { strToU8, Zip, ZipDeflate, ZipPassThrough } from "fflate";
 

@@ -83,6 +83,12 @@ bun test tests/wrangler-proxy.test.mjs tests/wrangler-runner.test.ts scripts/loc
 
 大包和运行时验证入口为 `apps/desktop/src/backup/tests/large-archive.mjs`、`zip64-entry-count.mjs` 及 `docs/changes/evidence/2026-10-23-desktop-backup/wrangler-backup-replay.mjs`；运行前构建所需 worker。已有有效结果无需重复执行。
 
+### CI 状态
+
+[PR #684](https://github.com/tianma-if/edgeever/pull/684) 已提交。首轮 CI 的本次 lint 问题已修正：移除未使用的 Markdown 导入，并将文件名控制字符匹配改为等价的字符码检查。两文件定向 lint 与现有命名测试通过，不改变接受的文件名范围。
+
+全仓 `bun run lint` 仍被官方基线中未修改的两处代码阻塞：`apps/desktop/src/main/picgo.mjs:56` 的 `no-control-regex`，以及 `apps/mobile/src/lib/mobile-locale.tsx:805` 的 `no-useless-spread`。这两文件与官方 `main` 一致，需要上游维护者修正后恢复完整 CI；本次 PR 不修改它们。
+
 ### 发布前仍需完成
 
 - Windows/Linux 原生目录权限、安全存储、文件发布和恢复，以及真实旧版到新版打包应用升级，尚需对应平台验证。

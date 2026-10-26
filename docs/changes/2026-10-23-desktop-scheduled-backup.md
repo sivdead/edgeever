@@ -83,6 +83,12 @@ bun test tests/wrangler-proxy.test.mjs tests/wrangler-runner.test.ts scripts/loc
 
 Large-archive/runtime entry points are `apps/desktop/src/backup/tests/large-archive.mjs`, `zip64-entry-count.mjs`, and `docs/changes/evidence/2026-10-23-desktop-backup/wrangler-backup-replay.mjs`; build the required workers first. Reuse valid results rather than repeating these runs.
 
+### CI status
+
+[PR #684](https://github.com/tianma-if/edgeever/pull/684) is submitted. The first CI run's feature-related lint issues are fixed: remove an unused Markdown import and replace the filename control-character expression with an equivalent character-code check. Targeted lint and existing naming tests passed; the accepted filename range is unchanged.
+
+Repository-wide `bun run lint` remains blocked by two unchanged official-baseline locations: `no-control-regex` in `apps/desktop/src/main/picgo.mjs:56` and `no-useless-spread` in `apps/mobile/src/lib/mobile-locale.tsx:805`. Both files match official `main`; upstream maintenance is needed to restore full CI, and this PR leaves them unchanged.
+
 ### Remaining release acceptance
 
 - Native Windows/Linux directory permissions, secure storage, publication and restore, plus a real old-to-new packaged application upgrade, require their platform environments.
