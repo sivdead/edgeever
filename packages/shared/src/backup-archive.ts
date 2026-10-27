@@ -514,22 +514,24 @@ export const restoreEdgeEverZip = async (
     await streamZipEntries(backup.archive, (file) => {
       const resource = resourcesByPath.get(file.name);
       if (!resource) return {};
-      const sinkPromise = target.createResourceRestoreSink(resource.id, resource);
+      let sinkPromise: Promise<JsonResourceRestoreSink> | undefined;
+      // Start only when awaited: disk reads can otherwise outlive a fast rejection.
+      const getSink = () => sinkPromise ??= target.createResourceRestoreSink(resource.id, resource);
       let byteSize = 0;
       return {
         async write(chunk) {
           byteSize += chunk.byteLength;
           if (byteSize > resource.byteSize) {
-            const sink = await sinkPromise;
+            const sink = await getSink();
             await sink.abort();
             throw new EdgeEverZipImportError("incompleteResources");
           }
-          const sink = await sinkPromise;
+          const sink = await getSink();
           activeSinks.add(sink);
           await sink.write(chunk);
         },
         async close() {
-          const sink = await sinkPromise;
+          const sink = await getSink();
           activeSinks.add(sink);
           if (byteSize !== resource.byteSize) {
             await sink.abort();

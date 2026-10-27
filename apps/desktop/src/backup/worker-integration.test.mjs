@@ -1,9 +1,10 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { execFileSync, fork } from "node:child_process";
+import { execFile, execFileSync, fork } from "node:child_process";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { fetchEdgeEverApp } from "../../../api/src/index.ts";
 import { createSelfHostedStorageAdapter } from "../../../api/src/self-hosted-storage-adapter.ts";
 import { BackupManager } from "../main/backup-manager.mjs";
@@ -33,9 +34,9 @@ const nodeBinary = execFileSync("node", ["-p", "process.execPath"], { encoding: 
 const prepareBundle = async () => {
   if (!bundle) {
     bundleDirectory = await mkdtemp(join(tmpdir(), "edgeever-backup-e2e-bundle-"));
-    const build = await Bun.build({ entrypoints: ["apps/desktop/src/backup/worker.ts"], target: "node", format: "esm", outdir: bundleDirectory, naming: "backup-worker.mjs" });
+    const build = await Bun.build({ entrypoints: ["apps/desktop/src/backup/worker.ts", "apps/desktop/src/backup/tests/restore-sink-rejection.mjs"], target: "node", format: "esm", outdir: bundleDirectory, naming: "[name].mjs" });
     if (!build.success) throw new Error(build.logs.join("\n"));
-    bundle = build.outputs[0].path;
+    bundle = join(bundleDirectory, "worker.mjs");
   }
 };
 const launch = async (data) => {
@@ -62,6 +63,12 @@ const launch = async (data) => {
   };
   return { worker, next, exited, messages };
 };
+
+test("fast upload initialization failures reach the restore handler without terminating Node", async () => {
+  await prepareBundle();
+  const { stdout } = await promisify(execFile)(nodeBinary, [join(bundleDirectory, "restore-sink-rejection.mjs")]);
+  expect(JSON.parse(stdout)).toEqual({ status: 503, code: "object_storage_unavailable", message: "Target storage unavailable" });
+});
 
 test("failed workers cancel unfinished sibling requests and exit", async () => {
   let release;
