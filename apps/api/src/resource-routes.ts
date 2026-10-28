@@ -10,8 +10,7 @@ import { apiError, badRequest, notFound } from "./http-errors";
 import { resolveObjectStorage } from "./object-storage";
 import {
   SUPPORTED_IMAGE_MIME_TYPES,
-  contentDispositionAttachment,
-  contentDispositionInline,
+  resourceContentDisposition,
   mapResource,
   mapResourceListItem,
   mapResourceStorageSummary,
@@ -315,9 +314,7 @@ export const registerResourceRoutes = (
     }
     headers.set(
       "Content-Disposition",
-      resource.kind === "image" || isPdfAttachment(resource.mime_type, resource.filename) || playableMimeType
-        ? contentDispositionInline(resource.filename)
-        : contentDispositionAttachment(resource.filename),
+      resourceContentDisposition(resource, headers.get("Content-Type")),
     );
     headers.set("X-Content-Type-Options", "nosniff");
     setSvgResourceSecurityHeaders(headers);

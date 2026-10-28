@@ -9,7 +9,7 @@ import { createId, isoNow, parseJsonArray } from "./entity-utils";
 import { apiError, notFound } from "./http-errors";
 import { resolveObjectStorage } from "./object-storage";
 import { getAuditActor, getWorkspaceId, requireUser } from "./request-auth";
-import { contentDispositionAttachment, contentDispositionInline } from "./resource-service";
+import { resourceContentDisposition } from "./resource-service";
 import {
   isShareUnlockBlocked,
   nextShareUnlockFailure,
@@ -73,11 +73,6 @@ const mapMemoShare = (row: MemoShareRow, password?: string): MemoShare => ({
   passwordProtected: Boolean(row.password_hash),
   ...(password ? { password } : {}),
 });
-
-const contentDisposition = (kind: SharedResourceRow["kind"], mimeType: string | null, filename: string | null) => {
-  const inline = kind === "image" || isPdfAttachment(mimeType, filename) || Boolean(resolvePlayableMediaMimeType(mimeType, filename));
-  return inline ? contentDispositionInline(filename) : contentDispositionAttachment(filename);
-};
 
 const resolveShareToken = (c: AppContext, value: string) => resolveMemoShareToken(c.env.storage.db, value);
 
@@ -159,7 +154,7 @@ export const serveSharedResource = async (c: AppContext, resource: SharedResourc
   } else {
     headers.set("Content-Length", String(resource.byte_size));
   }
-  headers.set("Content-Disposition", contentDisposition(resource.kind, resource.mime_type, resource.filename));
+  headers.set("Content-Disposition", resourceContentDisposition(resource, headers.get("Content-Type")));
   headers.set("Cache-Control", "private, no-store");
   headers.set("X-Content-Type-Options", "nosniff");
   setSvgResourceSecurityHeaders(headers);

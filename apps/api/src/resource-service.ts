@@ -1,5 +1,7 @@
 import {
   SUPPORTED_IMAGE_MIME_TYPES,
+  isPdfAttachment,
+  resolvePlayableMediaMimeType,
   type Resource,
   type ResourceListItem,
   type ResourceStorageSummary,
@@ -103,6 +105,13 @@ export const validateImageUpload = (mimeType: string, size: number) => {
   if (size <= 0 || size > MAX_IMAGE_UPLOAD_BYTES) {
     throw new AppError("upload_too_large", "Image must be between 1 byte and 100 MiB.", 413);
   }
+};
+
+export const validateRestoredResourceMimeType = (kind: Resource["kind"], mimeType: string, size: number) => {
+  if (kind !== "image") return;
+  const normalized = mimeType.split(";")[0]!.trim().toLowerCase();
+  // Old archives may have no image MIME; the response policy downloads these.
+  if (normalized && normalized !== "application/octet-stream") validateImageUpload(normalized, size);
 };
 
 export const deleteReleasedResourceObjects = async (
@@ -472,3 +481,15 @@ const contentDisposition = (kind: "inline" | "attachment", filename: string | nu
 export const contentDispositionInline = (filename: string | null) => contentDisposition("inline", filename);
 
 export const contentDispositionAttachment = (filename: string | null) => contentDisposition("attachment", filename);
+
+/** Check images against the final MIME without expanding existing PDF/media previews. */
+export const resourceContentDisposition = (
+  resource: Pick<ResourceRow, "kind" | "mime_type" | "filename">,
+  responseMimeType: string | null,
+) => {
+  const normalized = responseMimeType?.split(";")[0]?.trim().toLowerCase();
+  const inline = (resource.kind === "image" && SUPPORTED_IMAGE_MIME_TYPES.has(normalized ?? ""))
+    || isPdfAttachment(resource.mime_type, resource.filename)
+    || Boolean(resolvePlayableMediaMimeType(resource.mime_type, resource.filename));
+  return inline ? contentDispositionInline(resource.filename) : contentDispositionAttachment(resource.filename);
+};
