@@ -187,7 +187,7 @@ export const initiateResourceRestoreUpload = async (
     throw new AppError("upload_too_large", "Backup resource size is invalid.", 413);
   }
   const mimeType = metadata.mimeType?.trim() || "application/octet-stream";
-  validateRestoredResourceMimeType(metadata.kind, mimeType, metadata.byteSize);
+  validateRestoredResourceMimeType(metadata.kind, metadata.mimeType ?? mimeType, metadata.byteSize);
 
   const workspaceId = getWorkspaceId(context);
   const memo = await context.env.storage.db.prepare(

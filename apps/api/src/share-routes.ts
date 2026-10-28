@@ -1,4 +1,4 @@
-import { setSvgResourceSecurityHeaders, accountNoteProseFromRow, collectMemoLinkIds, isPdfAttachment, MemoShareUpdateSchema, NoteBodyFontUpdateSchema, NoteProseUpdateSchema, parsePublishedNoteBodyFont, publicNoteProseFromAccount, PublicShareUnlockSchema, resolveMemoContentDoc, resolvePlayableMediaMimeType, sanitizeNoteProseCss, type AccountNoteProse, type ManagedMemoShare, type MemoShare, type NoteProseAccountRow, type PublicMemoShare, type TiptapDoc } from "@edgeever/shared";
+import { accountNoteProseFromRow, collectMemoLinkIds, MemoShareUpdateSchema, NoteBodyFontUpdateSchema, NoteProseUpdateSchema, parsePublishedNoteBodyFont, publicNoteProseFromAccount, PublicShareUnlockSchema, resolveMemoContentDoc, sanitizeNoteProseCss, type AccountNoteProse, type ManagedMemoShare, type MemoShare, type NoteProseAccountRow, type PublicMemoShare, type TiptapDoc } from "@edgeever/shared";
 import { zValidator } from "@hono/zod-validator";
 import type { Hono } from "hono";
 import type { AppContext, AppEnv } from "./api-context";
@@ -9,7 +9,7 @@ import { createId, isoNow, parseJsonArray } from "./entity-utils";
 import { apiError, notFound } from "./http-errors";
 import { resolveObjectStorage } from "./object-storage";
 import { getAuditActor, getWorkspaceId, requireUser } from "./request-auth";
-import { resourceContentDisposition } from "./resource-service";
+import { setResourceContentHeaders } from "./resource-service";
 import {
   isShareUnlockBlocked,
   nextShareUnlockFailure,
@@ -136,13 +136,6 @@ export const serveSharedResource = async (c: AppContext, resource: SharedResourc
 
   const headers = new Headers();
   object.writeHttpMetadata(headers);
-  const playableMimeType = resolvePlayableMediaMimeType(resource.mime_type, resource.filename);
-  headers.set(
-    "Content-Type",
-    isPdfAttachment(resource.mime_type, resource.filename)
-      ? "application/pdf"
-      : playableMimeType ?? resource.mime_type ?? headers.get("Content-Type") ?? "application/octet-stream",
-  );
   headers.set("Accept-Ranges", "bytes");
   if (byteRange.kind === "range") {
     const length = object.range?.length ?? byteRange.range.length;
@@ -154,10 +147,8 @@ export const serveSharedResource = async (c: AppContext, resource: SharedResourc
   } else {
     headers.set("Content-Length", String(resource.byte_size));
   }
-  headers.set("Content-Disposition", resourceContentDisposition(resource, headers.get("Content-Type")));
+  setResourceContentHeaders(headers, resource);
   headers.set("Cache-Control", "private, no-store");
-  headers.set("X-Content-Type-Options", "nosniff");
-  setSvgResourceSecurityHeaders(headers);
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   return new Response(object.body, { headers, status: byteRange.kind === "range" ? 206 : 200 });
 };

@@ -2,10 +2,12 @@ import {
   SUPPORTED_IMAGE_MIME_TYPES,
   isPdfAttachment,
   resolvePlayableMediaMimeType,
+  setSvgResourceSecurityHeaders,
   type Resource,
   type ResourceListItem,
   type ResourceStorageSummary,
 } from "@edgeever/shared";
+import { format as formatContentType, parse as parseContentType } from "content-type";
 import { auditStatement } from "./audit";
 import type { AppContext, AuditActor, Bindings } from "./api-context";
 import { AppError } from "./app-error";
@@ -107,11 +109,28 @@ export const validateImageUpload = (mimeType: string, size: number) => {
   }
 };
 
+// HTTP field bytes: HTAB, visible ASCII and obs-text, never other controls or DEL.
+const HTTP_FIELD_VALUE_PATTERN = /^[\t\u0020-\u007e\u0080-\u00ff]*$/;
+
+const parseResourceContentType = (value: string) => {
+  if (!HTTP_FIELD_VALUE_PATTERN.test(value)) return null;
+  if (!value.trim()) return { type: "application/octet-stream", header: "application/octet-stream" };
+  try {
+    // A top-level comma ends the first type. Never silently accept the remainder.
+    const parsed = parseContentType(value, { comma: true });
+    if (parsed.index !== value.length) return null;
+    return { type: parsed.type, header: formatContentType(parsed) };
+  } catch {
+    return null;
+  }
+};
+
 export const validateRestoredResourceMimeType = (kind: Resource["kind"], mimeType: string, size: number) => {
-  if (kind !== "image") return;
-  const normalized = mimeType.split(";")[0]!.trim().toLowerCase();
-  // Old archives may have no image MIME; the response policy downloads these.
-  if (normalized && normalized !== "application/octet-stream") validateImageUpload(normalized, size);
+  const parsed = parseResourceContentType(mimeType);
+  if (!parsed) {
+    throw new AppError("unsupported_media_type", "Resource MIME type must contain a single valid media type.", 415);
+  }
+  if (kind === "image" && parsed.type !== "application/octet-stream") validateImageUpload(parsed.type, size);
 };
 
 export const deleteReleasedResourceObjects = async (
@@ -482,14 +501,30 @@ export const contentDispositionInline = (filename: string | null) => contentDisp
 
 export const contentDispositionAttachment = (filename: string | null) => contentDisposition("attachment", filename);
 
-/** Check images against the final MIME without expanding existing PDF/media previews. */
-export const resourceContentDisposition = (
+/** One policy for both the browser MIME and the decision to render it inline. */
+export const setResourceContentHeaders = (
+  headers: Headers,
   resource: Pick<ResourceRow, "kind" | "mime_type" | "filename">,
-  responseMimeType: string | null,
 ) => {
-  const normalized = responseMimeType?.split(";")[0]?.trim().toLowerCase();
-  const inline = (resource.kind === "image" && SUPPORTED_IMAGE_MIME_TYPES.has(normalized ?? ""))
-    || isPdfAttachment(resource.mime_type, resource.filename)
-    || Boolean(resolvePlayableMediaMimeType(resource.mime_type, resource.filename));
-  return inline ? contentDispositionInline(resource.filename) : contentDispositionAttachment(resource.filename);
+  const sourceMimeType = resource.mime_type ?? headers.get("Content-Type") ?? "";
+  const parsed = parseResourceContentType(sourceMimeType);
+  let contentType = "application/octet-stream";
+  let inline = false;
+
+  // Invalid legacy metadata must not be rescued into a preview by its filename.
+  if (parsed) {
+    const pdf = isPdfAttachment(resource.mime_type, resource.filename);
+    const media = resolvePlayableMediaMimeType(resource.mime_type ? parsed.type : null, resource.filename);
+    if (pdf) contentType = "application/pdf";
+    else if (media) contentType = resource.mime_type && parsed.type === media ? parsed.header : media;
+    else contentType = parsed.header;
+
+    inline = pdf || Boolean(media)
+      || (resource.kind === "image" && SUPPORTED_IMAGE_MIME_TYPES.has(parsed.type));
+  }
+
+  headers.set("Content-Type", contentType);
+  headers.set("Content-Disposition", inline ? contentDispositionInline(resource.filename) : contentDispositionAttachment(resource.filename));
+  headers.set("X-Content-Type-Options", "nosniff");
+  setSvgResourceSecurityHeaders(headers);
 };

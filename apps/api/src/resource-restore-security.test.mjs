@@ -189,7 +189,7 @@ describe("restored resource security", () => {
         const response = await f.request(path);
         expect(response.status).toBe(200);
         expect(response.headers.get("Content-Disposition")).toStartWith("attachment;");
-        expect(response.headers.get("Content-Type")).toBe(mimeType ?? "text/html");
+        expect(response.headers.get("Content-Type")).toBe(mimeType === "TEXT/HTML; charset=utf-8" ? "text/html; charset=utf-8" : mimeType ?? "text/html");
         expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
         expect(await response.text()).toBe(html);
       }
@@ -296,4 +296,129 @@ describe("restored resource security", () => {
       expect((await (await f.request(`/api/v1/memos/${f.memo.id}`)).json()).memo.contentMarkdown).toBe("Original note");
     });
   }
+});
+
+const ambiguousTypes = [
+  ["image", "image/png; charset=utf-8, text/html"],
+  ["image", 'image/png; note="quoted, value", text/html'],
+  ["image", "image/png,"],
+  ["attachment", "audio/mpeg; ignored=x, text/html"],
+  ["attachment", "video/mp4; ignored=x, application/xhtml+xml"],
+  ["attachment", "application/pdf, text/html"],
+  ["attachment", "not-a-mime"],
+  ["attachment", 'text/plain; note="line\nbreak"'],
+  ["image", 'image/png; note="ok"\r\n; charset=utf-8'],
+  ["attachment", 'audio/mpeg; charset=utf-8; charset="line\nbreak"'],
+  ["attachment", "\r\n"],
+];
+
+const seedSharedResource = async (f, { kind, mimeType, filename = "resource.bin", objectMimeType = "application/octet-stream", body = html }) => {
+  const token = "s".repeat(43);
+  const notebookToken = "n".repeat(43);
+  f.database.run("INSERT INTO memo_shares (id, memo_id, workspace_id, token) VALUES ('security_share', ?, 'ws_default', ?)", [f.memo.id, token]);
+  f.database.run("INSERT INTO notebook_shares (id, notebook_id, workspace_id, token) VALUES ('security_notebook', ?, 'ws_default', ?)", [f.notebook.id, notebookToken]);
+  const bytes = typeof body === "string" ? new TextEncoder().encode(body) : body;
+  await f.environment.storage.resources.put("header-regression", bytes);
+  const getObject = f.environment.storage.resources.get.bind(f.environment.storage.resources);
+  f.environment.storage.resources.get = async (...args) => {
+    const object = await getObject(...args);
+    object.writeHttpMetadata = (headers) => headers.set("Content-Type", objectMimeType);
+    return object;
+  };
+  f.database.run("INSERT INTO resources (id, memo_id, object_key, kind, mime_type, filename, byte_size) VALUES ('res_security', ?, 'header-regression', ?, ?, ?, ?)", [f.memo.id, kind, mimeType, filename, bytes.length]);
+  return [
+    "/api/v1/resources/res_security/blob",
+    `/api/public/shares/${token}/resources/res_security/blob`,
+    `/api/public/notebook-shares/${notebookToken}/resources/res_security/blob`,
+  ];
+};
+
+describe("single-valued resource content types", () => {
+  for (const [kind, mimeType] of ambiguousTypes) {
+    for (const mode of ["legacy", "resumable"]) {
+      test(`${mode} restore rejects the entire ambiguous ${mimeType} declaration`, async () => {
+        const f = await fixture();
+        const metadata = f.metadata({ kind, mimeType, filename: "resource.bin", byteSize: html.length });
+        const previousObjects = await readdir(f.directory, { recursive: true });
+        const response = mode === "legacy"
+          ? await f.restore(metadata, html, "application/octet-stream")
+          : await f.request("/api/v1/restores/json/resources/res_security/uploads", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(metadata),
+          });
+        expect(response.status).toBe(415);
+        expect(await response.json()).toMatchObject({ error: { code: "unsupported_media_type" } });
+        expect(f.resourceRow()).toBeNull();
+        expect(f.database.query("SELECT COUNT(*) AS count FROM resource_uploads").get().count).toBe(0);
+        expect(await readdir(f.directory, { recursive: true })).toEqual(previousObjects);
+      });
+    }
+
+    test(`legacy ${kind} resource with ${mimeType} downloads on all blob routes`, async () => {
+      const f = await fixture();
+      const paths = await seedSharedResource(f, { kind, mimeType });
+      for (const path of paths) {
+        const response = await f.request(path);
+        expect(response.status).toBe(200);
+        expect(response.headers.get("Content-Type")).toBe("application/octet-stream");
+        expect(response.headers.get("Content-Disposition")).toStartWith("attachment;");
+        expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+        expect(await response.text()).toBe(html);
+      }
+    });
+  }
+
+  for (const [kind, mimeType] of [ambiguousTypes[0], ambiguousTypes[3], ambiguousTypes[ambiguousTypes.length - 2]]) {
+    test(`completion revalidates an old ${kind} upload with ambiguous MIME before assembly`, async () => {
+      const f = await fixture();
+      expect((await f.restore(f.metadata())).status).toBe(200);
+      const previous = f.resourceRow();
+      const metadata = f.metadata({ kind: "attachment", mimeType: "text/plain", filename: "resource.bin", byteSize: html.length });
+      const { upload } = await f.json("/api/v1/restores/json/resources/res_security/uploads", metadata);
+      f.database.run("UPDATE resource_uploads SET kind = ?, mime_type = ?, restore_metadata_json = ? WHERE id = ?", [kind, mimeType, JSON.stringify({ ...metadata, kind, mimeType }), upload.id]);
+      const session = f.database.query("SELECT object_key FROM resource_uploads WHERE id = ?").get(upload.id);
+      expect((await f.request(`/api/v1/resource-uploads/${upload.id}/parts/1`, {
+        method: "PUT", headers: { "Content-Type": "application/octet-stream", "Content-Length": String(html.length) }, body: html,
+      })).status).toBe(200);
+      const response = await f.request(`/api/v1/resource-uploads/${upload.id}/complete`, { method: "POST" });
+      expect(response.status).toBe(415);
+      expect(await response.json()).toMatchObject({ error: { code: "unsupported_media_type" } });
+      expect(f.resourceRow()).toEqual(previous);
+      expect(await Bun.file(join(f.directory, session.object_key)).exists()).toBe(false);
+      expect(new Uint8Array(await readFile(join(f.directory, previous.object_key)))).toEqual(png);
+    });
+  }
+
+  test("ambiguous object MIME and a misleading PDF filename cannot enable inline rendering", async () => {
+    for (const metadata of [
+      { kind: "image", mimeType: null, objectMimeType: ambiguousTypes[0][1] },
+      { kind: "attachment", mimeType: null, objectMimeType: ambiguousTypes[3][1] },
+      { kind: "image", mimeType: ambiguousTypes[0][1], filename: "resource.pdf" },
+    ]) {
+      const f = await fixture();
+      for (const path of await seedSharedResource(f, metadata)) {
+        const response = await f.request(path);
+        expect(response.headers.get("Content-Type")).toBe("application/octet-stream");
+        expect(response.headers.get("Content-Disposition")).toStartWith("attachment;");
+        expect(await response.text()).toBe(html);
+      }
+    }
+  });
+
+  test("quoted commas, semicolons, escaped quotes and SVG charset remain one safely serialized type", async () => {
+    const mimeType = 'IMAGE/SVG+XML;\tcharset="utf-16le"; note="a,b; text/html; \\"quoted\\""';
+    const header = 'image/svg+xml; charset=utf-16le; note="a,b; text/html; \\"quoted\\""';
+    const bytes = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><text>旧备份</text></svg>', "utf16le");
+    for (const mode of ["legacy", "resumable"]) {
+      const f = await fixture();
+      const metadata = f.metadata({ mimeType, filename: "encoded.svg", byteSize: bytes.length });
+      if (mode === "legacy") expect((await f.restore(metadata, bytes)).status).toBe(200);
+      else await createEdgeEverClient({ baseUrl: f.serve() }).restoreJsonResource(metadata.id, metadata, new Blob([bytes]));
+      expect(f.resourceRow().mime_type).toBe(mimeType);
+      const response = await f.request("/api/v1/resources/res_security/blob");
+      expect(response.headers.get("Content-Type")).toBe(header);
+      expect(response.headers.get("Content-Disposition")).toStartWith("inline;");
+      expect(response.headers.get("Content-Security-Policy")).toContain("sandbox");
+      expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(bytes));
+    }
+  });
 });
