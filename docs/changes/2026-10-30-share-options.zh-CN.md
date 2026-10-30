@@ -30,6 +30,8 @@
 - 当前 31 项分享 API/Web 测试、`bun run typecheck`、`bun run typecheck:mobile`、`bun run build:web` 和 `git diff --check` 均通过，见 [validation.json](evidence/2026-10-30-share-options/validation.json)。复用行为未变的 41 项 shared sharing、share-page、notebook-share 测试结果，见 [related-tests.txt](evidence/2026-10-30-share-options/related-tests.txt)。
 - [跨版本脚本](evidence/2026-10-30-share-options/cross-version.mjs)从基线 `e052ac3b` 加载旧分享路由与旧 schema，在真实内存 SQLite 的旧结构上创建并解锁分享，再执行 migration 0082、切换新路由，最后用旧路由读取/更新新数据。[结果](evidence/2026-10-30-share-options/cross-version.json)覆盖旧行逐字段保留、升级后旧解锁有效、换密码使旧密码/Cookie 对正文和附件失效、旧客户端生成/关闭密码仍可用。脚本使用当前未变更的依赖模块及测试对象存储，不是已安装应用升级测试。
 
+分享菜单测试已同步扩展后的密码 payload，4 项通过；未改产品行为。全量 Ubuntu 回归中另有上游已有的字体断言失败：`PreferenceCard.test.mjs:31` 禁止 `.edgeever-code-source`，与上游新增等宽代码字体冲突。已核对同一失败出现在不含本 PR 的上游 `main`，见 [CI 证据](evidence/2026-10-30-share-options/ci-status.json)。全量回归尚未通过，需上游字体变更同步该测试。
+
 双向核对：两项功能、失败处理及兼容性均有实现与验收证据；实际产品 diff 对应密码、详情字段/开关、类型和翻译。笔记本路由仅补充 `showDetails: true`，保持原展示。二维码、认证机制、版本和部署配置未改。
 
 未验证：已安装原生桌面端及真实 Cloudflare/Docker 生产环境；此次没有移动端功能变更或 Android 真机验收。发布时先应用新增 migration，再部署新版应用。回退可保留新增字段并撤回应用代码，已验证旧分享路由仍可读取和更新。

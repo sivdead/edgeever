@@ -1,0 +1,20 @@
+{
+  "pullRequest": "https://github.com/tianma-if/edgeever/pull/735",
+  "initialRun": "https://github.com/tianma-if/edgeever/actions/runs/41027208416",
+  "sharingFailure": {
+    "test": "tests/note-sharing-menu.test.ts",
+    "reason": "The source assertion expected the old passwordProtected-only call; the implementation preserves that field and optionally adds password",
+    "fix": "Update the source assertion for the extended payload; no product behavior changed",
+    "localResult": "4 pass, 0 fail",
+    "output": "menu-tests.txt"
+  },
+  "upstreamFailure": {
+    "test": "apps/web/src/components/settings/PreferenceCard.test.mjs:31",
+    "reason": "The test forbids .edgeever-code-source, but upstream monospace font support now uses it",
+    "baselineCommit": "28c85a94b14d7c16482ed84fae03b849fc25c428",
+    "baselineRun": "https://github.com/tianma-if/edgeever/actions/runs/41014825645",
+    "baselineConclusion": "failure with the same assertion",
+    "changedByThisPR": false
+  },
+  "productValidation": "Unchanged from validation.json; this follow-up only changes the menu test and documentation"
+}

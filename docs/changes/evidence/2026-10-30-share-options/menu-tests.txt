@@ -1,0 +1,12 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/note-sharing-menu.test.ts:
+(pass) note sharing menu > keeps sharing available while reading is locked and on the phone [0.36ms]
+(pass) note sharing menu > shows a toast after copying the note for other platforms [0.16ms]
+(pass) note sharing menu > explains why sharing a newly created local note is disabled [0.12ms]
+(pass) note sharing menu > share dialog can enable an auto-generated access password [0.05ms]
+
+ 4 pass
+ 0 fail
+ 24 expect() calls
+Ran 4 tests across 1 file. [45.00ms]
