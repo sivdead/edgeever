@@ -331,10 +331,7 @@ export const PublicShareArticle = ({
   useEffect(() => {
     if (publishedBodyFont === undefined) return undefined;
     if (!publishedBodyFont) {
-      delete document.documentElement.dataset.editorBodyFont;
-      document.documentElement.style.removeProperty(
-        "--editor-body-font-family",
-      );
+      applyEditorBodyFontPreference({ choice: "system", customFamily: "" });
     } else {
       applyEditorBodyFontPreference({
         choice: publishedBodyFont,
