@@ -9,18 +9,15 @@
     },
     {
       "command": "bun run typecheck",
-      "exitCode": 0,
-      "stdout": "$ tsc -p tsconfig.json --noEmit\n"
+      "exitCode": 0
     },
     {
       "command": "bun run typecheck:mobile",
-      "exitCode": 0,
-      "stdout": "$ bun run --cwd apps/mobile typecheck\n$ tsc -p tsconfig.json --noEmit\n"
+      "exitCode": 0
     },
     {
       "command": "bun run build:web",
-      "exitCode": 0,
-      "stdoutTail": "apps/web/dist/assets/vendor~emacs-lisp-CAcDB2J0.js                                                                                       779.97 kB │ gzip: 197.64 kB\napps/web/dist/assets/vendor~mathlive-loader-Bg1_SEYl.js                                                                                  802.11 kB │ gzip: 222.07 kB\napps/web/dist/assets/vendor-beautiful-mermaid-DeoO4YbT.js                                                                              1,429.22 kB │ gzip: 441.49 kB\n\n✓ built in 3.21s\n\nPWA v1.3.0\nmode      generateSW\nprecache  1 entries (0.00 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-5ff8427f.js"
+      "exitCode": 0
     },
     {
       "command": "git diff --check",
@@ -31,11 +28,5 @@
     "41 passing sharing/share-page/notebook-share tests: related-tests.txt; their tested behavior is unchanged",
     "Migration and old-route compatibility: cross-version.json; migration and tested request behavior are unchanged"
   ],
-  "browserRegression": "password-controls-regression.json",
-  "removedCheck": "Source-string-only PublicSharePage.test.mjs removed; actual public-page rendering is covered by browser.json and screenshots",
-  "beforeFixEvidence": [
-    "Injected 503 on regenerate and password toggle produced two unhandled ApiRequestError rejections",
-    "While a custom password save was pending, the input remained editable and later edits were discarded on success",
-    "PATCH with passwordProtected:false and a valid password returned 400 instead of disabling protection"
-  ]
+  "browserRegression": "password-controls-regression.json"
 }

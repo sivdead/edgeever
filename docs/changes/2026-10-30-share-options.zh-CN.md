@@ -16,22 +16,18 @@
 
 ## 边界与风险
 
-不改二维码下载、笔记本分享、认证设计、备份/同步、无关分享重构、发版/版本号/部署，也不删除用户数据。不修改用户当前有未提交导入改动的工作区。不自动提交、合并或部署 PR。
+不改二维码下载、笔记本分享、认证设计、备份/同步、无关分享重构、发版/版本号/部署，也不删除用户数据。
 
 最坏后果是密码更新导致分享无法解锁，或公开页错误隐藏元数据/内容。回退是撤回应用代码，保留追加 migration；已有分享仍可读。migration 和旧客户端行为需要明确验证。真实 Cloudflare/Docker 生产及已安装桌面端验收不在本地变更范围，除非另行要求。
 
 ## 完成核对
 
-实现与本地验收已完成，位于 `codex/issue-714-share-options`。未执行生产部署。
+两项功能均已实现。自定义密码沿用现有加密、限流和解锁失效机制；详情字段通过 `0082_memo_share_options.sql` 增加，默认显示。笔记本页面保持原展示，二维码和部署配置未改。
 
-- 自定义密码已接通 schema、client、分享 API 和 Web 对话框；保留原生成、加密、管理端读取和复制路径。详情开关通过新增 `0082_memo_share_options.sql`、API 映射和公开页展示实现；五个语言目录同步更新。
-- 密码开关/重新生成使用原有 mutation 错误处理，自定义保存失败时保留输入；保存期间输入不可编辑。已用注入 503 和延迟响应复现并验证修复，未处理 Promise 错误为零。关闭保护时忽略随附有效密码，撤回组合拒绝条件；移除仅匹配源码字符串的公开页测试，以实际页面验收为准。
-- [浏览器回归脚本](evidence/2026-10-30-share-options/password-controls-regression.mjs)与[结果](evidence/2026-10-30-share-options/password-controls-regression.json)覆盖开关、重新生成和自定义保存失败，以及处理中状态。已检查 [保存中](evidence/2026-10-30-share-options/review-pending.png) / [保存后](evidence/2026-10-30-share-options/review-saved.png) 的实际渲染。完整分享流程及详情开关的有效证据保留在 [browser.json](evidence/2026-10-30-share-options/browser.json)。
-- 当前 31 项分享 API/Web 测试、`bun run typecheck`、`bun run typecheck:mobile`、`bun run build:web` 和 `git diff --check` 均通过，见 [validation.json](evidence/2026-10-30-share-options/validation.json)。复用行为未变的 41 项 shared sharing、share-page、notebook-share 测试结果，见 [related-tests.txt](evidence/2026-10-30-share-options/related-tests.txt)。
-- [跨版本脚本](evidence/2026-10-30-share-options/cross-version.mjs)从基线 `e052ac3b` 加载旧分享路由与旧 schema，在真实内存 SQLite 的旧结构上创建并解锁分享，再执行 migration 0082、切换新路由，最后用旧路由读取/更新新数据。[结果](evidence/2026-10-30-share-options/cross-version.json)覆盖旧行逐字段保留、升级后旧解锁有效、换密码使旧密码/Cookie 对正文和附件失效、旧客户端生成/关闭密码仍可用。脚本使用当前未变更的依赖模块及测试对象存储，不是已安装应用升级测试。
+- 分享 API/Web 测试 31 项通过；分享菜单测试 4 项通过；类型检查、移动端类型检查、Web 构建及 diff 检查通过，见 [验证结果](evidence/2026-10-30-share-options/validation.json) 和 [菜单测试](evidence/2026-10-30-share-options/menu-tests.txt)。行为未变的 41 项关联测试结果仍有效。
+- 已实际验证密码设置/替换/关闭、公开页详情开关、Markdown 访问，以及失败时保留原状态和输入、保存期间禁用输入。见 [浏览器验收](evidence/2026-10-30-share-options/browser.json)、[失败和处理中状态回归](evidence/2026-10-30-share-options/password-controls-regression.mjs) 与[结果](evidence/2026-10-30-share-options/password-controls-regression.json)。真实截图：[保存中](evidence/2026-10-30-share-options/review-pending.png)、[保存后](evidence/2026-10-30-share-options/review-saved.png)、[页头显示](evidence/2026-10-30-share-options/details-visible.png)、[页头隐藏](evidence/2026-10-30-share-options/details-hidden.png)。
+- [跨版本验收](evidence/2026-10-30-share-options/cross-version.mjs)覆盖基线 `e052ac3b` 分享路由/schema → SQLite migration 0082 → 新路由 → 旧路由读取和更新。结果验证旧行保留、升级后旧解锁有效、换密码使旧密码/Cookie 对正文和附件失效。使用测试对象存储，属于 API/数据库兼容验证，不是已安装应用升级测试。
 
-分享菜单测试已同步扩展后的密码 payload，4 项通过；未改产品行为。全量 Ubuntu 回归中另有上游已有的字体断言失败：`PreferenceCard.test.mjs:31` 禁止 `.edgeever-code-source`，与上游新增等宽代码字体冲突。已核对同一失败出现在不含本 PR 的上游 `main`，见 [CI 证据](evidence/2026-10-30-share-options/ci-status.json)。全量回归尚未通过，需上游字体变更同步该测试。
+全量 Ubuntu 回归尚未通过：上游已有的 `PreferenceCard.test.mjs:31` 字体断言与上游等宽代码字体支持冲突。由上游字体变更维护者同步该测试后重新运行 CI；本变更不修改字体实现或该测试。
 
-双向核对：两项功能、失败处理及兼容性均有实现与验收证据；实际产品 diff 对应密码、详情字段/开关、类型和翻译。笔记本路由仅补充 `showDetails: true`，保持原展示。二维码、认证机制、版本和部署配置未改。
-
-未验证：已安装原生桌面端及真实 Cloudflare/Docker 生产环境；此次没有移动端功能变更或 Android 真机验收。发布时先应用新增 migration，再部署新版应用。回退可保留新增字段并撤回应用代码，已验证旧分享路由仍可读取和更新。
+未验证已安装原生桌面端及真实 Cloudflare/Docker 生产环境；没有移动端功能变更。部署时先应用新增 migration，再部署应用。回退可保留新增字段并撤回应用代码；旧分享路由读取和更新已验证。

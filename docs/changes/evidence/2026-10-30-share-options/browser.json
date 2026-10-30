@@ -1,7 +1,6 @@
 {
-  "runtime": "local Wrangler 4.112.0 / workerd, built Web bundle; Ego Lite Chromium",
-  "origin": "http://127.0.0.1:8788",
-  "data": "isolated worktree demo seed",
+  "runtime": "Local workerd with the production Web bundle in Chromium",
+  "data": "Isolated demo/test fixtures",
   "status": "passed",
   "checks": [
     "Create an unprotected share and see details by default",
