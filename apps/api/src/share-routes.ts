@@ -29,7 +29,8 @@ type MemoShareRow = {
   created_at: string;
   updated_at: string;
   password_hash: string | null;
-  show_details?: number | null;
+  show_updated_at?: number | null;
+  show_branding?: number | null;
 };
 type ManagedMemoShareRow = MemoShareRow & {
   title: string | null;
@@ -44,7 +45,8 @@ type PublicMemoShareRow = {
   tags_json: string;
   updated_at: string;
   password_hash: string | null;
-  show_details?: number | null;
+  show_updated_at?: number | null;
+  show_branding?: number | null;
   note_body_font: string | null;
 } & NoteProseAccountRow;
 type ShareGateRow = {
@@ -73,7 +75,8 @@ const mapMemoShare = (row: MemoShareRow, password?: string): MemoShare => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   passwordProtected: Boolean(row.password_hash),
-  showDetails: row.show_details !== 0,
+  showUpdatedAt: row.show_updated_at !== 0,
+  showBranding: row.show_branding !== 0,
   ...(password ? { password } : {}),
 });
 
@@ -100,7 +103,7 @@ const loadShareGate = async (c: AppContext, token: string) =>
      LIMIT 1`
   ).bind(token).first<ShareGateRow>();
 
-const selectMemoShareSql = `SELECT memo_id, token, slug, created_at, updated_at, password_hash, password_encrypted, show_details
+const selectMemoShareSql = `SELECT memo_id, token, slug, created_at, updated_at, password_hash, password_encrypted, show_updated_at, show_branding
   FROM memo_shares WHERE memo_id = ? AND workspace_id = ?`;
 
 const NOTE_PROSE_COLUMNS = `note_prose_font_size, note_prose_line_height, note_prose_palette, note_prose_custom_css, note_prose_custom_colors`;
@@ -162,7 +165,7 @@ export const registerPublicShareRoutes = (app: Hono<AppEnv>) => {
     if (!token) return notFound(c, "Shared note not found");
 
     const row = await c.env.storage.db.prepare(
-      `SELECT ms.workspace_id, m.title, mc.content_json, mc.content_markdown, m.tags_json, m.updated_at, ms.password_hash, ms.show_details,
+      `SELECT ms.workspace_id, m.title, mc.content_json, mc.content_markdown, m.tags_json, m.updated_at, ms.password_hash, ms.show_updated_at, ms.show_branding,
               u.note_body_font, u.note_prose_font_size, u.note_prose_line_height, u.note_prose_palette,
               u.note_prose_custom_css, u.note_prose_custom_colors
        FROM memo_shares ms
@@ -203,7 +206,8 @@ export const registerPublicShareRoutes = (app: Hono<AppEnv>) => {
       memoShareTokens,
       bodyFont: parsePublishedNoteBodyFont(row.note_body_font),
       prose: publicNoteProseFromAccount(presentAccountNoteProse(row)),
-      showDetails: row.show_details !== 0,
+      showUpdatedAt: row.show_updated_at !== 0,
+      showBranding: row.show_branding !== 0,
     };
     c.header("Cache-Control", "private, no-store");
     c.header("X-Robots-Tag", "noindex, nofollow, noarchive");
@@ -278,7 +282,7 @@ export const registerMemoShareRoutes = (app: Hono<AppEnv>) => {
     const limit = Number.isSafeInteger(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 50;
     const offset = Number.isSafeInteger(parsedOffset) ? Math.min(1_000_000, Math.max(0, parsedOffset)) : 0;
     const rows = await c.env.storage.db.prepare(
-      `SELECT ms.memo_id, ms.token, ms.slug, ms.created_at, ms.updated_at, ms.password_hash, ms.show_details,
+      `SELECT ms.memo_id, ms.token, ms.slug, ms.created_at, ms.updated_at, ms.password_hash, ms.show_updated_at, ms.show_branding,
               m.title, m.notebook_id, n.name AS notebook_name
        FROM memo_shares ms
        INNER JOIN memos m ON m.id = ms.memo_id AND m.workspace_id = ms.workspace_id
@@ -363,7 +367,7 @@ export const registerMemoShareRoutes = (app: Hono<AppEnv>) => {
 
     c.header("Cache-Control", "private, no-store");
     const row = await c.env.storage.db.prepare(
-      `SELECT ms.memo_id, ms.token, ms.slug, ms.created_at, ms.updated_at, ms.password_hash, ms.password_encrypted, ms.show_details
+      `SELECT ms.memo_id, ms.token, ms.slug, ms.created_at, ms.updated_at, ms.password_hash, ms.password_encrypted, ms.show_updated_at, ms.show_branding
        FROM memo_shares ms
        INNER JOIN memos m ON m.id = ms.memo_id AND m.workspace_id = ms.workspace_id
        WHERE ms.memo_id = ? AND ms.workspace_id = ? AND m.is_deleted = 0
@@ -423,7 +427,7 @@ export const registerMemoShareRoutes = (app: Hono<AppEnv>) => {
 
     const now = isoNow();
     const actor = getAuditActor(c);
-    const { passwordProtected, password, slug, showDetails } = c.req.valid("json");
+    const { passwordProtected, password, slug, showUpdatedAt, showBranding } = c.req.valid("json");
     if (slug !== undefined && slug !== (existing.slug ?? null)) {
       if (slug !== null) {
         await c.env.storage.db.prepare(
@@ -449,18 +453,25 @@ export const registerMemoShareRoutes = (app: Hono<AppEnv>) => {
       }
       await audit(c.env.storage.db, actor.actorType, actor.actorId, slug ? "memo.share_slug_set" : "memo.share_slug_clear", "memo", memoId, {});
     }
-    if (showDetails !== undefined && showDetails !== (existing.show_details !== 0)) {
+    if ((showUpdatedAt !== undefined && showUpdatedAt !== (existing.show_updated_at !== 0)) ||
+        (showBranding !== undefined && showBranding !== (existing.show_branding !== 0))) {
       await c.env.storage.db.prepare(
-        `UPDATE memo_shares SET show_details = ?, updated_at = ? WHERE memo_id = ? AND workspace_id = ?`
-      ).bind(showDetails ? 1 : 0, now, memoId, workspaceId).run();
+        `UPDATE memo_shares
+         SET show_updated_at = COALESCE(?, show_updated_at), show_branding = COALESCE(?, show_branding), updated_at = ?
+         WHERE memo_id = ? AND workspace_id = ?`
+      ).bind(
+        showUpdatedAt === undefined ? null : Number(showUpdatedAt),
+        showBranding === undefined ? null : Number(showBranding),
+        now, memoId, workspaceId,
+      ).run();
       await audit(
         c.env.storage.db,
         actor.actorType,
         actor.actorId,
-        showDetails ? "memo.share_details_show" : "memo.share_details_hide",
+        "memo.share_presentation_update",
         "memo",
         memoId,
-        {},
+        { showUpdatedAt, showBranding },
       );
     }
     if (passwordProtected === undefined && password === undefined) {

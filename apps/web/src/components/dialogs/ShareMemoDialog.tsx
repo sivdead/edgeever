@@ -63,8 +63,8 @@ export const ShareMemoDialog = ({
       void queryClient.invalidateQueries({ queryKey: ["memo-shares"] });
     },
   });
-  const detailsMutation = useMutation({
-    mutationFn: (showDetails: boolean) => api.updateMemoShare(memoId, { showDetails }),
+  const presentationMutation = useMutation({
+    mutationFn: (settings: { showUpdatedAt?: boolean; showBranding?: boolean }) => api.updateMemoShare(memoId, settings),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, data);
       void queryClient.invalidateQueries({ queryKey: ["memo-shares"] });
@@ -87,7 +87,7 @@ export const ShareMemoDialog = ({
   useEffect(() => {
     createMutation.reset();
     passwordMutation.reset();
-    detailsMutation.reset();
+    presentationMutation.reset();
     slugMutation.reset();
     revokeMutation.reset();
     setCopyState("idle");
@@ -102,9 +102,9 @@ export const ShareMemoDialog = ({
 
   const shareUrl = share ? getPublicShareUrl(memoSharePathSegment(share)) : "";
   const markdownUrl = shareUrl ? `${shareUrl}.md` : "";
-  const isWorking = shareQuery.isLoading || createMutation.isPending || passwordMutation.isPending || detailsMutation.isPending || slugMutation.isPending || revokeMutation.isPending;
+  const isWorking = shareQuery.isLoading || createMutation.isPending || passwordMutation.isPending || presentationMutation.isPending || slugMutation.isPending || revokeMutation.isPending;
   const slugTaken = slugMutation.error instanceof ApiRequestError && slugMutation.error.code === "share_slug_taken";
-  const error = shareQuery.error || createMutation.error || passwordMutation.error || detailsMutation.error || (slugTaken ? null : slugMutation.error) || revokeMutation.error;
+  const error = shareQuery.error || createMutation.error || passwordMutation.error || presentationMutation.error || (slugTaken ? null : slugMutation.error) || revokeMutation.error;
 
   const markCopied = (target: "link" | "password" | "both" | "markdown", copied: boolean) => {
     setCopyTarget(target);
@@ -227,17 +227,27 @@ export const ShareMemoDialog = ({
               }}
             />
 
-            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-              <div className="min-w-0">
-                <div className="text-xs font-medium leading-5 text-slate-800">{t("sharing.showDetails")}</div>
-                <p className="text-xs leading-5 text-slate-500">{t("sharing.showDetailsHint")}</p>
+            <div className="space-y-3 border-t border-slate-100 pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="share-show-updated-at" className="text-sm font-medium text-slate-800">{t("sharing.showUpdatedAt")}</label>
+                <Switch
+                  id="share-show-updated-at"
+                  aria-label={t("sharing.showUpdatedAt")}
+                  checked={share.showUpdatedAt !== false}
+                  disabled={isWorking}
+                  onCheckedChange={(enabled) => presentationMutation.mutate({ showUpdatedAt: enabled })}
+                />
               </div>
-              <Switch
-                checked={share.showDetails !== false}
-                disabled={isWorking}
-                onCheckedChange={(enabled) => detailsMutation.mutate(enabled)}
-                aria-label={t("sharing.showDetails")}
-              />
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="share-show-branding" className="text-sm font-medium text-slate-800">{t("sharing.showBranding")}</label>
+                <Switch
+                  id="share-show-branding"
+                  aria-label={t("sharing.showBranding")}
+                  checked={share.showBranding !== false}
+                  disabled={isWorking}
+                  onCheckedChange={(enabled) => presentationMutation.mutate({ showBranding: enabled })}
+                />
+              </div>
             </div>
 
             {share.passwordProtected ? null : (

@@ -46,7 +46,7 @@ try {
   writeFileSync(oldRoute, oldSource.replace('MemoShareUpdateSchema, ', '') + `\nimport { MemoShareUpdateSchema } from ${JSON.stringify(oldSchema)};\n`);
   const old = appFor(await import(pathToFileURL(oldRoute).href));
   for (const file of globSync('migrations/*.sql').sort()) {
-    if (!file.endsWith('0082_memo_share_options.sql')) sql.exec(readFileSync(file,'utf8'));
+    if (file < 'migrations/0082_') sql.exec(readFileSync(file,'utf8'));
   }
   sql.exec(`INSERT INTO workspaces(id,name,is_personal) VALUES('ws_714','Isolated acceptance',1);
     INSERT INTO notebooks(id,workspace_id,name) VALUES('nb_714','ws_714','Inbox');
@@ -64,19 +64,22 @@ try {
   check('Baseline routes and schema create and unlock a generated-password share before migration 0082');
   const before = sql.prepare('SELECT * FROM memo_shares').get();
   sql.exec(readFileSync('migrations/0082_memo_share_options.sql','utf8'));
+  sql.exec(readFileSync('migrations/0083_memo_share_presentation.sql','utf8'));
   const after = sql.prepare('SELECT * FROM memo_shares').get();
-  assert.deepEqual(after,{...before,show_details:1});
+  assert.deepEqual(after,{...before,show_details:1,show_updated_at:1,show_branding:1});
   const next = appFor(current);
   assert.equal((await request(next,base,'GET',null,cookie)).status,200);
-  assert.equal((await (await request(next,sharePath)).json()).share.showDetails,true);
-  check('Migration preserves every old row value; new routes accept the pre-upgrade unlock and show details by default');
-  const hidden = await request(next,sharePath,'PATCH',{showDetails:false});
+  const migratedShare=(await (await request(next,sharePath)).json()).share;
+  assert.equal(migratedShare.showUpdatedAt,true);
+  assert.equal(migratedShare.showBranding,true);
+  check('Migrations 0082/0083 preserve every old row value; new routes accept the pre-upgrade unlock and enable both presentation settings by default');
+  const hidden = await request(next,sharePath,'PATCH',{showUpdatedAt:false,showBranding:true});
   assert.equal((await hidden.json()).share.password,protectedShare.password);
   assert.equal((await request(next,base,'GET',null,cookie)).status,200);
-  check('Changing only details preserves password and existing unlock');
+  check('Changing only presentation preserves password and existing unlock');
   for (const password of ['', '   ', 'abc', 'x'.repeat(65)]) {
     const beforeInvalid = sql.prepare('SELECT * FROM memo_shares').get();
-    assert.equal((await request(next,sharePath,'PATCH',{password,showDetails:true})).status,400);
+    assert.equal((await request(next,sharePath,'PATCH',{password,showBranding:false})).status,400);
     assert.deepEqual(sql.prepare('SELECT * FROM memo_shares').get(),beforeInvalid);
   }
   for (const password of ['abcd','x'.repeat(64),'  分享验收714  ']) {
@@ -103,12 +106,12 @@ try {
   assert.equal((await request(old,base,'GET',null,fresh)).status,200);
   const regenerated=(await (await request(old,sharePath,'PATCH',{passwordProtected:true})).json()).share;
   assert.equal(regenerated.password.length,8);
-  assert.equal(sql.prepare('SELECT show_details FROM memo_shares').get().show_details,0);
+  assert.deepEqual(sql.prepare('SELECT show_updated_at,show_branding FROM memo_shares').get(),{show_updated_at:0,show_branding:1});
   assert.equal((await request(next,sharePath,'PATCH',{passwordProtected:false})).status,200);
   assert.equal((await request(next,base)).status,200);
   const markdown=await renderPublicMemoSharePage(new Request(`http://localhost/share/${protectedShare.token}.md`),db,async()=>new Response('<div id="root"></div>'));
   assert.equal(markdown.status,200); assert.equal(await markdown.text(),'# Migration acceptance\n\nUnchanged body');
-  check('Baseline application reads new custom passwords and regenerates after migration; old-style disable restores public Markdown without changing details');
+  check('Baseline application reads new custom passwords and regenerates after migration; old-style disable restores public Markdown without changing presentation');
   results.status='passed';
   writeFileSync(new URL('./cross-version.json',import.meta.url),JSON.stringify(results,null,2)+'\n');
   console.log(JSON.stringify(results,null,2));
