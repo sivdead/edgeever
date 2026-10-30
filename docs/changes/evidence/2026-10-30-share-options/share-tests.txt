@@ -1,0 +1,41 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/api/src/share-routes.test.mjs:
+(pass) public memo shares > returns share tokens only for referenced notes that are also public [69.46ms]
+(pass) public memo shares > publishes page details by default and lets the owner hide them per share [40.17ms]
+(pass) public memo shares > reads existing fonts and new catalog choices through the same stored preference [48.99ms]
+(pass) public memo shares > publishes the author's built-in note font and ignores anything else [37.54ms]
+(pass) public memo shares > publishes account prose with the public share [43.22ms]
+(pass) public memo shares > saves a signed-in user's published note font [40.69ms]
+(pass) public memo shares > serves shared PDF byte ranges with public-share cache controls [39.31ms]
+(pass) public memo shares > serves filename-detected shared audio inline [34.65ms]
+(pass) public memo shares > serves filename-detected shared video inline [31.69ms]
+(pass) memo share management > revocation retries succeed and keep the old link inaccessible [34.05ms]
+(pass) memo share management > lists only live shares from the signed-in workspace without exposing passwords [35.49ms]
+(pass) memo share management > paginates shares and requires an interactive user session [37.59ms]
+(pass) password-protected memo shares > accepts an owner-chosen password, trims it, and keeps the password gate [60.92ms]
+(pass) password-protected memo shares > rejects custom passwords outside the supported length [41.10ms]
+(pass) password-protected memo shares > keeps existing shares public until a password is enabled [44.09ms]
+(pass) password-protected memo shares > unlocks with the generated password and then serves the note and attachments [60.33ms]
+(pass) password-protected memo shares > clearing the password ignores a supplied value and makes the existing link public again [49.67ms]
+(pass) workspace login cannot bypass a memo's password or attachment gate [49.70ms]
+(pass) memo share password recovery > returns encrypted-at-rest passwords only through authenticated single-share reads [48.88ms]
+(pass) one-step memo sharing > concurrent creation and retries reuse one link; reopening preserves its password [49.68ms]
+(pass) public SVG previews use the same sandbox and preserve the original [34.91ms]
+(pass) custom memo share addresses > serves the note at the custom address while the token link keeps working [32.17ms]
+(pass) custom memo share addresses > links between public notes prefer the custom address [32.93ms]
+(pass) custom memo share addresses > rejects invalid, reserved and already used addresses [33.47ms]
+(pass) custom memo share addresses > clearing or changing the address retires the old one immediately [38.65ms]
+(pass) custom memo share addresses > keeps a released address bound to its workspace so other tenants cannot take over old links [36.43ms]
+(pass) custom memo share addresses > keeps the password gate and scopes the unlock grant to the custom address [56.31ms]
+
+apps/web/src/components/dialogs/ShareMemoDialog.test.mjs:
+(pass) ShareMemoDialog raw markdown link support > generates public share URLs and .md alternates [0.11ms]
+(pass) ShareMemoDialog raw markdown link support > renders compact raw markdown strip with copy button and i18n labels [0.06ms]
+(pass) ShareMemoDialog raw markdown link support > renders open markdown button in actions footer when not password protected [0.02ms]
+(pass) ShareMemoDialog raw markdown link support > switches compact hint text when password protection is active [0.01ms]
+
+ 31 pass
+ 0 fail
+ 280 expect() calls
+Ran 31 tests across 2 files. [1.61s]

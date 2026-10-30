@@ -6,6 +6,7 @@ import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { memoSharePathSegment } from "@edgeever/shared";
 import { SharePasswordControls } from "./SharePasswordControls";
 import { ShareSlugControls } from "./ShareSlugControls";
@@ -55,7 +56,15 @@ export const ShareMemoDialog = ({
     },
   });
   const passwordMutation = useMutation({
-    mutationFn: (passwordProtected: boolean) => api.updateMemoShare(memoId, { passwordProtected }),
+    mutationFn: ({ passwordProtected, password }: { passwordProtected: boolean; password?: string }) =>
+      api.updateMemoShare(memoId, { passwordProtected, ...(password ? { password } : {}) }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, data);
+      void queryClient.invalidateQueries({ queryKey: ["memo-shares"] });
+    },
+  });
+  const detailsMutation = useMutation({
+    mutationFn: (showDetails: boolean) => api.updateMemoShare(memoId, { showDetails }),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, data);
       void queryClient.invalidateQueries({ queryKey: ["memo-shares"] });
@@ -78,6 +87,7 @@ export const ShareMemoDialog = ({
   useEffect(() => {
     createMutation.reset();
     passwordMutation.reset();
+    detailsMutation.reset();
     slugMutation.reset();
     revokeMutation.reset();
     setCopyState("idle");
@@ -92,9 +102,9 @@ export const ShareMemoDialog = ({
 
   const shareUrl = share ? getPublicShareUrl(memoSharePathSegment(share)) : "";
   const markdownUrl = shareUrl ? `${shareUrl}.md` : "";
-  const isWorking = shareQuery.isLoading || createMutation.isPending || passwordMutation.isPending || slugMutation.isPending || revokeMutation.isPending;
+  const isWorking = shareQuery.isLoading || createMutation.isPending || passwordMutation.isPending || detailsMutation.isPending || slugMutation.isPending || revokeMutation.isPending;
   const slugTaken = slugMutation.error instanceof ApiRequestError && slugMutation.error.code === "share_slug_taken";
-  const error = shareQuery.error || createMutation.error || passwordMutation.error || (slugTaken ? null : slugMutation.error) || revokeMutation.error;
+  const error = shareQuery.error || createMutation.error || passwordMutation.error || detailsMutation.error || (slugTaken ? null : slugMutation.error) || revokeMutation.error;
 
   const markCopied = (target: "link" | "password" | "both" | "markdown", copied: boolean) => {
     setCopyTarget(target);
@@ -207,8 +217,28 @@ export const ShareMemoDialog = ({
               busy={isWorking}
               shareUrl={shareUrl}
               hideCopyBoth={true}
-              onChange={(enabled) => passwordMutation.mutate(enabled)}
+              allowCustomPassword={true}
+              onChange={(enabled, password) => {
+                const payload = { passwordProtected: enabled, password };
+                if (password !== undefined) {
+                  return passwordMutation.mutateAsync(payload).then(() => undefined);
+                }
+                passwordMutation.mutate(payload);
+              }}
             />
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+              <div className="min-w-0">
+                <div className="text-xs font-medium leading-5 text-slate-800">{t("sharing.showDetails")}</div>
+                <p className="text-xs leading-5 text-slate-500">{t("sharing.showDetailsHint")}</p>
+              </div>
+              <Switch
+                checked={share.showDetails !== false}
+                disabled={isWorking}
+                onCheckedChange={(enabled) => detailsMutation.mutate(enabled)}
+                aria-label={t("sharing.showDetails")}
+              />
+            </div>
 
             {share.passwordProtected ? null : (
               <ShareQrCode key={`qr-${share.token}`} url={shareUrl} hint={t("sharing.qrCodeHint")} />

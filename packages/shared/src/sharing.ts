@@ -12,6 +12,8 @@ export type MemoShare = {
   createdAt: string;
   updatedAt: string;
   passwordProtected: boolean;
+  /** Public standalone pages show the EdgeEver/update details by default. */
+  showDetails: boolean;
   /** Plaintext is returned only immediately after the owner enables or regenerates a password. */
   password?: string;
 };
@@ -79,6 +81,8 @@ export type PublicMemoShare = {
   bodyFont: PublishedNoteBodyFont | null;
   /** Account reading settings for the article body. Column width stays on the author's editor. */
   prose: PublicNoteProse;
+  /** Older servers may omit this; clients treat omission as visible. */
+  showDetails?: boolean;
 };
 
 const RESOURCE_URL_PATTERN =

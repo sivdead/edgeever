@@ -494,6 +494,7 @@ export const registerPublicNotebookShareRoutes = (app: Hono<AppEnv>) => {
             ? null
             : sanitizeNoteProseCss(account.customCss),
       }),
+      showDetails: true,
     };
     return c.json({ share, memoUrls });
   });
