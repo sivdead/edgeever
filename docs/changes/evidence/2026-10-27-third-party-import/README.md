@@ -1,0 +1,103 @@
+# Third-party import acceptance conclusions
+
+[简体中文](README.zh-CN.md)
+
+## Actual imports from three sources
+
+The Web Settings entry and earlier isolated native runtimes passed the authored source fixtures below. Paths, bodies, tags, original timestamps and full attachment bytes read back correctly; images and PDFs are readable.
+
+| Source | Source notebooks | Notes | Note-owned resources |
+| --- | ---: | ---: | ---: |
+| Evernote 11.40.2 ENEX | 1 | 1 | 5 |
+| Obsidian 1.14.5 Vault | 4 | 6 | 6 |
+| Joplin 3.7.21 JEX | 3 | 5 | 6 |
+
+See the [real-source fixtures](../../../../tests/fixtures/note-import/real-apps/README.md) for provenance. Integration tests also cover Joplin RAW, plain Markdown / Front Matter, directories and ZIP. ENEX retains current task states, code blocks and its two-row table. Obsidian retains root-path precedence, literal percent signs and archive attachments inside directories. Joplin retains included hierarchy, tag associations and valid missing-ancestor boundaries.
+
+- Cancelling preflight writes nothing. Tags beyond the first 24 are ignored in source order with a non-blocking warning.
+- Task-local retries do not duplicate notes or attachments; uncertain commits are not blindly replayed. Final link updates do not overwrite concurrent human edits.
+- Hiding the dialog or changing Settings categories retains a running task. Actual Web acceptance opens an incomplete note after attachment failure, returns to Settings and completes the same task by retry; explicit result dismissal cleans it up. Success, failure, cancellation and cleanup-error paths release paused sync and refresh committed writes.
+- Image outer links, separate titles and resource URL suffixes survive editing, saving, reopening and export; ordinary HTML anchors are unchanged.
+
+## Platform and upgrade coverage
+
+- macOS: Electron 44.7.0 development shell and Rust sidecar with an isolated profile; imports, resource readback and resumed sync pass.
+- Linux: Ubuntu 25.10 x86_64 / Xvfb, official v2.16.1 runtime with the import renderer. Three-source imports, failure retry, cancellation and full-restart readback pass; 16 acceptance notes and 22 cached resources persist.
+- Cloudflare: an earlier candidate merged with upstream 2.16.1 passed an existing-instance upgrade and actual three-source imports. The `0072` → `0084` upgrade retained four existing notes and one resource, while upstream `0078` cleared factory colors on five default notebooks. The current R27–R30 API/Web and `0085` are now deployed; all pre-upgrade business fields in 18 notes, 19 notebooks, 23 resources and the workspace remain identical. The existing authenticated session, health and OpenAPI probes pass. Deployed Settings imports one additional ENEX note with original timestamps/tags and five matching attachment payloads; PNG/SVG load and the PDF is readable.
+- Upgrading the original API against the same database retained existing bodies, tags, timestamps and resource bytes. Driver-level checks do not establish Docker container deployment acceptance.
+
+Earlier native candidates do not cover the latest image/list and R31–R38 repairs. R31–R38 are not deployed to Cloudflare. Windows native, physical mobile devices, older-client editing, AppImage installation and cross-version automatic updates remain unverified. Current Cloudflare checks did not repeat password login or complete saving a Web ZIP to the local filesystem; the user can confirm these through the login and export entries.
+
+## Large libraries and quotas
+
+These are local measurements, not production D1 billing or Worker CPU data.
+
+| Notes imported into one notebook | Pre-repair memo-row aggregate contributions | After R27 |
+| --- | ---: | ---: |
+| 100 | 9,900 | 0 |
+| 1,000 | 999,000 | 0 |
+| 2,000 | 3,998,000 | 0 |
+
+A newly created empty notebook returns its full statistics once; existence checks no longer aggregate its notes. The same read amplification in parent and duplicate-note checks is also removed.
+
+| Notes in complete export | Pre-repair OFFSET SQL VM instructions | Legacy OFFSET after R28 | New cursor after R28 |
+| --- | ---: | ---: | ---: |
+| 1,015 | 1,152,000 | 239,000 | 37,000 |
+| 4,015 | 16,032,000 | 2,700,000 | 138,000 |
+
+SQL VM counts are approximate. Cursors use the `(workspace_id, is_deleted, created_at, id)` index; legacy OFFSET still incurs cumulative offset skipping. Real HTTP → client → JSON ZIP / Markdown ZIP exports contain 79 notes, nine resources and 13 revisions. Bodies, tags, timestamps and independent attachment bytes match after the source server stops. Plain/encrypted backup, offline restoration and unchanged scheduled backup checks pass. The API/Web and `0085` are now deployed to the existing Cloudflare instance. Live JSON and Markdown exports each traverse three pages containing 19 notes and 28 resources, with no omissions or duplicates and no repeated total on continuation pages.
+
+### Current-candidate browser scale checks
+
+Actual Worker/IndexedDB preflight on macOS arm64, Ego Browser Chromium 156 and the development Web build, using separate small Markdown files with timestamps and no remote writes:
+
+| Source | 1,000 notes | 4,000 notes |
+| --- | ---: | ---: |
+| Obsidian | 2.6 s | 9.9 s |
+| Joplin Markdown | 2.4 s | 12.2 s |
+
+Counts match the inputs, with no errors/warnings or remaining resource chunks. Four times the notes takes approximately 3.8/5.1 times as long. These are preflight measurements, not production per-note write throughput.
+
+Actual Worker → IndexedDB → local D1 API import completes 96 bodies of 256 KiB each (24 MiB total) in 17.5 s. All 96 results serialize to approximately 36.7 KiB, with no full Markdown, JSON, text or intended-commit bodies and zero resource chunks. Separate SQLite API regressions pass multiple 1 MiB bodies, lost-response confirmation and concurrent human-edit protection.
+
+Single large bodies remain subject to backend storage limits: [D1 limits a string, BLOB or row to 2,000,000 bytes](https://developers.cloudflare.com/d1/platform/limits/). Current content rows store Markdown, JSON and plain text together. A local D1 import and the existing ordinary-create entry both reject a single 1 MiB plain-text body; import returns `SQLITE_TOOBIG`. This existing storage boundary is unchanged. Large-library tests do not establish arbitrary per-note size support; oversized sources remain in the original files rather than being truncated and counted as successes.
+
+### Implementation-baseline large resources
+
+Implementation-baseline large-resource measurements use a separate profile per case. RSS includes the same-process Worker; heap covers only the main page. Test bytes are highly compressible, and storage estimates reflect browser-reported physical usage.
+
+| Total input resources | Duration | Peak RSS | Peak heap | Peak estimated storage |
+| --- | ---: | ---: | ---: | ---: |
+| ZIP 1 GiB | 31.7 s | 1322.9 MiB | 131.7 MiB | 13.7 MiB |
+| ZIP 4 GiB | 119.8 s | 1412.6 MiB | 154.7 MiB | 47.6 MiB |
+| ENEX 192 MiB | 14.2 s | 1198.3 MiB | 135.4 MiB | 4.7 MiB |
+
+All three cases end with zero temporary resource chunks. Generate large fixtures when needed rather than committing them:
+
+```sh
+bun tests/fixtures/note-import/generate-large.mjs /tmp/edgeever-note-import-large
+```
+
+## Reproduce affected checks
+
+```sh
+bun install --frozen-lockfile
+bun test tests/note-import.integration.test.mjs packages/shared/src/image-link.test.mjs packages/shared/src/content.test.mjs
+bun run typecheck
+bun run typecheck:mobile
+bun run build:web
+```
+
+Screenshots, request captures, installation details and one-off scripts are excluded from the product repository; this directory retains acceptance conclusions only.
+
+## Image lists and special labels
+
+Production Web imports a test ENEX with unmatched brackets, line breaks and literal `&copy;` through Settings. Labels and images survive editing, saving and reopening, all five resource payloads match independent originals, and the PDF opens for reading. Uploaded filenames retain existing API normalization; visible label line breaks become spaces.
+
+Bullet, ordered, task and nested lists retain four images in their list items after Markdown/rich-text editing, saving and reopening, preserving outer links, starting numbers and checked states. Real-source, shared-content, related image/editor and lifecycle checks, both typechecks, the Web build and targeted lint pass. Dependencies retain locked `marked@17`; no parser upgrade is needed.
+
+ENML uses Turndown’s asterisk emphasis delimiter so Chinese italics adjacent to surrounding text remain italic, verified in the real Evernote export’s saved JSON and Web render.
+
+## Task state and cleanup
+
+Local-space failure before folder creation writes nothing remotely; failure to save a mapping after creation retains uncertainty without duplicate folders. Confirmed RAW Markdown attachments are not fully scanned as notes, while unconfirmed resource-folder notes remain supported. Same-note duplicate ENEX resources are cleaned per note; unreadable encrypted ZIPs and initialization cancellation settle promptly. Legal prototype-property attachment names upload and retry without duplicate resources or changed bytes.
