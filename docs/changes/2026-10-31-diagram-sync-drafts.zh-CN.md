@@ -50,11 +50,40 @@
 
 本场景的节点是在重开后消失，而不是回执返回瞬间消失：错误的已保存状态取消了后续自动保存。[原生端与 API 实测记录](evidence/2026-10-31-diagram-sync-drafts/macos-controlled-comparison.json)。
 
-| 阶段 | 修复前（`01422910`） | 修复后（`e0e1b678`） |
-| --- | --- | --- |
-| 回执返回前：相同新草稿 | ![修复前，旧回执尚未返回](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-before-ack.png) | ![修复后，旧回执尚未返回](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-before-ack.png) |
-| 回执返回后：标题和状态出现差别 | ![修复前，旧回执返回后](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-after-ack.png) | ![修复后，旧回执返回后](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-after-ack.png) |
-| 重开后：新增节点丢失与保留 | ![修复前，重开只剩 8 个节点](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-reopened.png) | ![修复后，重开保留 9 个节点](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-reopened.png) |
+### 重启后的实际差别
+
+**修复前：新增节点丢失，9 个节点变回 8 个，标题回退。**
+
+![修复前，重启后只剩 8 个节点](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-reopened.png)
+
+**修复后：新增节点和新标题保留，重启后仍为 9 个节点。**
+
+![修复后，重启后保留 9 个节点](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-reopened.png)
+
+<details>
+<summary>查看旧回执返回前后的 4 张截图</summary>
+
+#### 回执返回前：两版均为相同新草稿、未保存
+
+修复前：
+
+![修复前，旧回执尚未返回](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-before-ack.png)
+
+修复后：
+
+![修复后，旧回执尚未返回](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-before-ack.png)
+
+#### 回执返回后：旧版标题回退并误报已同步，修复版保持新草稿、未保存
+
+修复前：
+
+![修复前，旧回执返回后](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-after-ack.png)
+
+修复后：
+
+![修复后，旧回执返回后](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-after-ack.png)
+
+</details>
 
 ## 补充原生重启截图（v2.15.0）
 

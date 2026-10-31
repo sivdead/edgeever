@@ -50,11 +50,40 @@ The unmodified v2.16.0 baseline (`01422910`) and fixed renderer (`e0e1b678`) use
 
 The disappearing node in this reproduction occurs on reopening, not immediately on acknowledgment: the incorrect clean state cancels the pending autosave. [Recorded native and API observations](evidence/2026-10-31-diagram-sync-drafts/macos-controlled-comparison.json).
 
-| Stage | Before the fix (`01422910`) | After the fix (`e0e1b678`) |
-| --- | --- | --- |
-| Response held: identical new draft | ![Baseline before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-before-ack.png) | ![Fixed before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-before-ack.png) |
-| Response delivered: title and status diverge | ![Baseline after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-after-ack.png) | ![Fixed after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-after-ack.png) |
-| Reopened: missing versus retained node | ![Baseline reopened with 8 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-reopened.png) | ![Fixed reopened with 9 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-reopened.png) |
+### The visible difference after restart
+
+**Before the fix: the new node disappears, the count drops from 9 to 8, and the title reverts.**
+
+![Baseline reopened with 8 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-reopened.png)
+
+**After the fix: the new node and title remain, with all 9 nodes after restart.**
+
+![Fixed reopened with 9 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-reopened.png)
+
+<details>
+<summary>Show the four screenshots before and after the older acknowledgment</summary>
+
+#### Response held: both versions have the same new, unsaved draft
+
+Before the fix:
+
+![Baseline before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-before-ack.png)
+
+After the fix:
+
+![Fixed before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-before-ack.png)
+
+#### Response delivered: the baseline reverts the title and falsely reports synchronized; the fix retains the unsaved draft
+
+Before the fix:
+
+![Baseline after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-after-ack.png)
+
+After the fix:
+
+![Fixed after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-after-ack.png)
+
+</details>
 
 ## Additional native restart screenshots (v2.15.0)
 
