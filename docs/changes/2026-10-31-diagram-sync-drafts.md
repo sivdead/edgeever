@@ -12,6 +12,7 @@
 - Continue to apply genuine remote changes when the editor has no local draft. When a genuine remote change arrives during editing, preserve the draft and its original concurrency base so the existing synchronization conflict handling remains effective.
 - Add a focused browser regression: delay a sync acknowledgment until a subsequent graph edit or inline edit exists, then verify the edit remains and reaches durable storage after autosave and reopening. Cover revision-only and content-hash updates, metadata, and an idle editor receiving a remote update with the same focused workflow or the existing isolated reproduction where needed. Make the regression fixtures independent of existing tags and selected notebooks; wait for API health through the Web proxy before initializing browser sessions.
 - Run the affected diagram checks, `bun run typecheck`, `bun run typecheck:mobile`, and `bun run build:web`. Inspect the rendered editor and exercise its edit/save path. Record desktop-client coverage separately from browser checks.
+- Capture a controlled before/after comparison on the PR's v2.16.0 baseline and fixed renderer through the same macOS native development entry: hold a real save response, make identical later node/title edits, then release the response. Show both versions immediately before and after the acknowledgment, and check the resulting local and server content after autosave.
 - Preserve the queued structured `contentJson` in desktop `memo.create` requests, using the existing API field and resource-URL normalization. Keep Markdown-only queue entries supported, and verify that a pending creation written by the unmodified v2.15.0 native client uploads and remains editable after loading the fixed renderer on the same SQLite profile. Do not weaken the suspicious-overwrite protection. Verify that creating a diagram and then changing its title and nodes uploads successfully without counting serialized metadata as note text.
 - Verify the macOS native client through the project's standard local-development entry, using its pinned Electron and a locally compiled Rust sidecar from v2.15.0 source. Verify the Linux native client under Xvfb with the formal v2.15.0 runtime. Both use a renderer built from that source with only this task's fixes applied. Use temporary application data, databases, and test services with auto-update disabled; do not replace an installed client or change an existing service.
 
@@ -33,7 +34,29 @@ Incorrect acknowledgment classification could hide a genuine remote change or ad
 - The desktop create request now forwards its normalized structured `contentJson`. Serialized diagram metadata is no longer counted as note text during creation, so the subsequent title/node edit is uploaded without weakening `suspicious_memo_overwrite` protection. A pending creation written through the unmodified v2.15.0 native client's sidecar is uploaded after switching the same SQLite profile to the fixed renderer, remains editable, and survives another full restart with no pending, failed, or conflicted queue items.
 - The macOS native client passes the same four workflows through the standard local-development entry: delayed acknowledgments, focused input across ID remapping, genuine remote updates, and persistence after a full restart. It uses Electron 44.7.0, a locally compiled Rust sidecar, real SQLite, and the real test API from v2.15.0 source. This covers native functionality; signed-installer and updater validation remains with the release workflow. Windows native validation remains unperformed.
 
-## Native validation screenshots
+## Controlled macOS native comparison
+
+The unmodified v2.16.0 baseline (`01422910`) and fixed renderer (`e0e1b678`) use the same standard native development entry, Electron 44.7.0, Rust sidecar, real SQLite, and real API. Both use a 1440 × 900 window; screenshots crop the same editor area at 100% zoom.
+
+1. Open an eight-node mind map and change its title to “上次自动保存的标题”. Let the real API store that autosave, but hold its response.
+2. Before the next 1,200 ms autosave, add “【新增】回执返回也不能丢” and change the title to “刚输入的新标题（不能丢）”. Pause the renderer clock to keep this draft pending, then release the older response.
+3. Advance the clock by 1,400 ms, synchronize, read the native SQLite memo and server memo, then fully quit and restart the native client and reopen the note. The API response and memo data are not rewritten by the test.
+
+| Stage | Before the fix | After the fix |
+| --- | --- | --- |
+| Older response still held | New title, 9 nodes, unsaved | New title, 9 nodes, unsaved |
+| Older response delivered | Title reverts; 9 nodes remain visible, but status incorrectly says synchronized | New title and 9 nodes remain; status correctly stays unsaved |
+| Autosave and reopen | Local/server storage never received the new node; only 8 nodes and the old title reopen | Local/server storage contains the new node and title; all 9 nodes reopen synchronized |
+
+The disappearing node in this reproduction occurs on reopening, not immediately on acknowledgment: the incorrect clean state cancels the pending autosave. [Recorded native and API observations](evidence/2026-10-31-diagram-sync-drafts/macos-controlled-comparison.json).
+
+| Stage | Before the fix (`01422910`) | After the fix (`e0e1b678`) |
+| --- | --- | --- |
+| Response held: identical new draft | ![Baseline before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-before-ack.png) | ![Fixed before acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-before-ack.png) |
+| Response delivered: title and status diverge | ![Baseline after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-after-ack.png) | ![Fixed after acknowledgment](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-after-ack.png) |
+| Reopened: missing versus retained node | ![Baseline reopened with 8 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-baseline-reopened.png) | ![Fixed reopened with 9 nodes](evidence/2026-10-31-diagram-sync-drafts/macos-fixed-reopened.png) |
+
+## Additional native restart screenshots (v2.15.0)
 
 macOS, through the standard native development entry: the renamed diagram, added node, and remote update remain after a full application restart.
 
