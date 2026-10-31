@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { registerBackupRoutes } from "./backup-routes.ts";
+import { registerSyncRoutes } from "./sync-routes.ts";
 import { createSelfHostedStorageAdapter } from "./self-hosted-storage-adapter.ts";
 import { createMemoRecord, getMemoDetail, mapMemoDetail } from "./memo-service.ts";
 import { restoreJsonMemos, restoreJsonNotebooks } from "./backup-service.ts";
@@ -14,11 +15,13 @@ const cleanups = [];
 afterEach(() => cleanups.splice(0).forEach((cleanup) => cleanup()));
 const auth = { kind: "user", actorType: "user", actorId: "backup-test-user", username: "owner", displayName: "Owner", scopes: [], workspaceId: "ws_default", role: "owner" };
 
-const installation = async ({ includeExportIndex = true } = {}) => {
+const installation = async ({ includeExportIndex = true, includeMemoIdIndex = true } = {}) => {
   const sqlite = new Database(":memory:");
   const migrations = globSync("migrations/*.sql").sort();
   // Start with the existing schema and data, then upgrade it in place.
-  for (const file of migrations.filter((file) => !file.endsWith("0080_backup_revision.sql") && (includeExportIndex || !file.endsWith("0085_export_cursor_index.sql")))) sqlite.exec(readFileSync(file, "utf8"));
+  for (const file of migrations.filter((file) => !file.endsWith("0080_backup_revision.sql")
+    && (includeExportIndex || !file.endsWith("0085_export_cursor_index.sql"))
+    && (includeMemoIdIndex || !file.endsWith("0086_memo_id_paging_index.sql")))) sqlite.exec(readFileSync(file, "utf8"));
   const directory = mkdtempSync(join(tmpdir(), "edgeever-backup-protocol-"));
   cleanups.push(() => { sqlite.close(); rmSync(directory, { recursive: true, force: true }); });
   const storage = createSelfHostedStorageAdapter(sqlite, directory);
@@ -29,6 +32,7 @@ const installation = async ({ includeExportIndex = true } = {}) => {
   const app = new Hono();
   app.use("/api/v1/*", async (c, next) => { c.set("auth", activeAuth); await next(); });
   registerBackupRoutes(app, { clampNumber: (v, min, max) => Math.min(Math.max(Number.isFinite(v) ? v : min, min), max), getMemoDetail, mapMemoDetail, restoreJsonMemos, restoreJsonNotebooks, sha256Bytes, initiateResourceRestoreUpload: async () => { throw new Error("unused"); } });
+  registerSyncRoutes(app, { clampNumber: (v, min, max) => Math.min(Math.max(v, min), max), mapMemoDetail });
   return {
     sqlite, storage, note, inbox,
     revision: (workspace = "ws_default") => String(sqlite.query("SELECT backup_revision FROM workspaces WHERE id = ?").get(workspace).backup_revision),
@@ -40,8 +44,92 @@ const installation = async ({ includeExportIndex = true } = {}) => {
 const pageUrl = (state, kind = "memos", after = "") => `/api/v1/backups/data?${new URLSearchParams({ kind, identity: state.identity, revision: state.backupRevision, after, limit: "1" })}`;
 
 describe("consistent backup reads across a real schema upgrade", () => {
+  test("upgrades populated backup and bootstrap pages to workspace-scoped ID seeks without changing their data", async () => {
+    const db = await installation({ includeMemoIdIndex: false });
+    db.sqlite.exec("INSERT INTO workspaces(id,name) VALUES('ws_other','Other'); INSERT INTO notebooks(id,workspace_id,name) VALUES('nb_other','ws_other','Other');");
+    const addMemo = db.sqlite.query(`INSERT INTO memos
+      (id,workspace_id,notebook_id,title,tags_json,is_deleted,deleted_at,created_at,updated_at)
+      VALUES(?,?,?,?,?,?,?,?,?)`);
+    const addContent = db.sqlite.query(`INSERT INTO memo_contents
+      (memo_id,content_json,content_markdown,content_text,content_hash,revision) VALUES(?,?,?,?,?,2)`);
+    db.sqlite.transaction(() => {
+      for (let index = 0; index < 64; index++) for (const workspaceId of ["ws_default", "ws_other"]) {
+        const id = `memo_paging_${String(index).padStart(3, "0")}_${workspaceId}`;
+        const deleted = index % 4 === 0;
+        const body = `Body ${id}`;
+        addMemo.run(id, workspaceId, workspaceId === "ws_default" ? db.inbox : "nb_other", `Title ${index}`, '["paging"]',
+          Number(deleted), deleted ? "2021-02-03T00:00:00.000Z" : null, "2020-01-01T00:00:00.000Z", "2021-02-03T00:00:00.000Z");
+        addContent.run(id, JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: body }] }] }), body, body, `hash-${id}`);
+        db.sqlite.query("INSERT INTO resources(id,memo_id,object_key,kind,byte_size,filename) VALUES(?,?,?,'attachment',4,'sample.txt')").run(`resource_${id}`, id, `object_${id}`);
+        db.sqlite.query("INSERT INTO memo_revisions(id,memo_id,revision,content_json,content_markdown,content_text,content_hash,created_by) VALUES(?,?,1,'{\"type\":\"doc\",\"content\":[]}','Previous','Previous','previous','user')").run(`revision_${id}`, id);
+      }
+    })();
+    const originalMemos = db.sqlite.query("SELECT * FROM memos ORDER BY id").all();
+    const dataSnapshot = () => Object.fromEntries([
+      ["memos", "id"], ["memo_contents", "memo_id"], ["resources", "id"], ["memo_revisions", "id"], ["notebooks", "id"], ["workspaces", "id"],
+    ].map(([table, key]) => [table, db.sqlite.query(`SELECT * FROM ${table} ORDER BY ${key}`).all()]));
+    const beforeData = dataSnapshot();
+    const pageQueries = [];
+    const prepare = db.storage.db.prepare.bind(db.storage.db);
+    db.storage.db.prepare = (sql) => {
+      const statement = prepare(sql), bind = statement.bind.bind(statement);
+      statement.bind = (...values) => {
+        if (sql.includes("INNER JOIN memo_contents") && sql.includes("ORDER BY m.id ASC")) pageQueries.push({ sql, values });
+        return bind(...values);
+      };
+      return statement;
+    };
+    const readAll = async () => {
+      const values = {};
+      for (const workspaceId of ["ws_default", "ws_other"]) {
+        db.setAuth({ ...auth, workspaceId });
+        const state = await (await db.request("/api/v1/backups/state")).json();
+        const backup = [];
+        let after = "";
+        do {
+          const response = await db.request(`/api/v1/backups/data?${new URLSearchParams({ kind: "memos", identity: state.identity, revision: state.backupRevision, after, limit: "7" })}`);
+          expect(response.status).toBe(200);
+          const page = await response.json();
+          backup.push(page); after = page.nextCursor;
+        } while (after !== null);
+        const bootstrap = [];
+        after = "";
+        do {
+          // No opt-in flags: preserve the metadata and defaults used by old clients.
+          const response = await db.request(`/api/v1/sync/bootstrap?${new URLSearchParams({ afterId: after, limit: "7" })}`);
+          expect(response.status).toBe(200);
+          const page = await response.json();
+          bootstrap.push(page); after = page.nextAfterId;
+        } while (after !== null);
+        const expected = originalMemos.filter(memo => memo.workspace_id === workspaceId);
+        expect(backup.flatMap(page => page.memos.map(memo => memo.id))).toEqual(expected.filter(memo => !memo.is_deleted).map(memo => memo.id));
+        expect(bootstrap.flatMap(page => page.memos.map(memo => memo.id))).toEqual(expected.map(memo => memo.id));
+        expect(backup.flatMap(page => page.resources)).toHaveLength(48);
+        expect(backup.flatMap(page => page.revisions)).toHaveLength(48);
+        values[workspaceId] = { state, backup, bootstrap };
+      }
+      return values;
+    };
+    // Keep the planner's ordinary pre-migration statistics: no ANALYZE warm-up.
+    const before = await readAll();
+    const explain = ({ sql, values }) => db.sqlite.query(`EXPLAIN QUERY PLAN ${sql}`).all(...values);
+    expect(pageQueries.some(query => explain(query).some(row => row.parent === 0 && row.detail.includes("TEMP B-TREE FOR ORDER BY")))).toBe(true);
+    pageQueries.length = 0;
+    db.sqlite.exec(readFileSync("migrations/0086_memo_id_paging_index.sql", "utf8"));
+    expect(dataSnapshot()).toEqual(beforeData);
+    expect(await readAll()).toEqual(before);
+    expect(pageQueries.length).toBeGreaterThan(2);
+    for (const query of pageQueries) {
+      const plan = explain(query);
+      expect(plan.some(row => row.detail.includes("idx_memos_workspace_id (workspace_id=? AND id>?)"))).toBe(true);
+      // Bootstrap's orphan-notebook fallback may sort; only the main page must not.
+      expect(plan.some(row => row.parent === 0 && row.detail.includes("TEMP B-TREE FOR ORDER BY"))).toBe(false);
+    }
+    expect(db.sqlite.query("SELECT name FROM sqlite_master WHERE name='idx_memos_workspace_created_export'").get()).not.toBeNull();
+  });
+
   test("upgrades existing data to indexed, stable browser-export continuation pages", async () => {
-    const db = await installation({ includeExportIndex: false });
+    const db = await installation({ includeExportIndex: false, includeMemoIdIndex: false });
     for (let index = 0; index < 60; index++) await createMemoRecord(db.storage.db, "ws_default", {
       notebookId: db.inbox, title: `Cursor ${index}`, contentMarkdown: `Body ${index}`, tags: ["budget"],
       createdAt: index % 2 ? "2020-01-02T00:00:00.000Z" : "2020-01-01T00:00:00.000Z",

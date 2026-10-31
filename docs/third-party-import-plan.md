@@ -2,7 +2,7 @@
 
 [简体中文](third-party-import-plan.zh-CN.md)
 
-Related: [Issue #657](https://github.com/tianma-if/edgeever/issues/657). Implemented contract; [acceptance scope and results](changes/evidence/2026-10-27-third-party-import/README.md).
+Related: [Issue #657](https://github.com/tianma-if/edgeever/issues/657). Sections 1–8 describe the implemented contract; section 9 describes the implemented D1 optimization and acceptance. [Acceptance scope and results](changes/evidence/2026-10-27-third-party-import/README.md).
 
 ## 1. Approach and first-release boundaries
 
@@ -140,4 +140,50 @@ Feature rollback can remove the new entry and REST routes without changing old e
 
 The [acceptance conclusions](changes/evidence/2026-10-27-third-party-import/README.md) distinguish the current Web/API candidate, earlier macOS/Linux native flows, existing-instance Cloudflare upgrades and large-library measurements. Real Evernote 11.40.2 ENEX, Obsidian 1.14.5 Vault and Joplin 3.7.21 RAW/JEX/both Markdown exports preserve declared bodies, hierarchy, source timestamps and original resource bytes.
 
-R27–R30 and the `0085` index are deployed to the existing Cloudflare instance. R31–R38 are verified locally and are not deployed; earlier native acceptance does not cover these latest repairs. Windows native, physical mobile devices, older-client editing, AppImage installation/cross-version updates and Docker container deployment remain unverified. Fresh password login and saving a Web ZIP to the local filesystem were not covered by the latest Cloudflare acceptance; they require checks through those entries when that deployment is accepted.
+R27–R30 and the `0085` index are deployed to the existing Cloudflare instance. R31–R39 and `0086` are verified locally and are not deployed; earlier native acceptance does not cover these latest repairs. Windows native, physical mobile devices, older-client editing, AppImage installation/cross-version updates and Docker container deployment remain unverified. Fresh password login and saving a Web ZIP to the local filesystem were not covered by the latest Cloudflare acceptance; they require checks through those entries when that deployment is accepted.
+
+## 9. D1 quota optimization
+
+### Add the paging index first
+
+Limit this iteration to a `(workspace_id, id)` memo index supporting consistent-backup memo pages and initial sync. It offers the largest measured benefit without API, client or backup-protocol changes. Treat unchanged-backup probing and search-index deduplication as separate follow-ups rather than changing these established paths together.
+
+Both endpoints continue by `id` without an index matching the workspace and ID range. Local D1 chooses the creation-time index's workspace prefix for backup and the archive index's workspace prefix for bootstrap, then repeatedly scans and sorts. Earlier SQLite VM measurements do not establish D1 row consumption in this environment; the [native row-count comparison](changes/evidence/2026-10-27-third-party-import/README.md#native-d1-row-count-comparison) supplements them.
+
+For 4,047 notes, adding only the candidate index reduces full-backup reads from 1,356,449 to 50,073 and initial-sync reads from 195,818 to 24,412. Complete returned data and ordering match. These are local workerd D1 `meta.rows_read` values; equivalent production-scale validation remains outstanding.
+
+### Implementation scope and choices
+
+Add incrementally numbered migration `0086_memo_id_paging_index.sql`. Its only statement is:
+
+```sql
+CREATE INDEX idx_memos_workspace_id ON memos(workspace_id, id);
+```
+
+- Retain executed migration `0085` and its creation-time index: Web JSON/Markdown exports still order by creation time and ID.
+- Choose `(workspace_id, id)`, not `(workspace_id, is_deleted, id)`: bootstrap includes deleted notes and does not constrain `is_deleted`, so the latter cannot serve both endpoints with a contiguous ID-range lookup. Backup retains its existing deleted-note filter.
+- Retain queries, cursors, page sizes, response fields and ordering. Cloudflare D1 and self-hosted SQLite use the same migration; existing clients need no new parameters.
+- Do not force `INDEXED BY` or substitute periodic `ANALYZE` for the missing index: neither an incompatible index order nor changing statistics should be required for this access path.
+- Add no import limits, quota configuration, retries, scheduling delays or fallback reads. Retain idempotency records, audit events and concurrency protection.
+
+### Read/write costs and risks
+
+Building the candidate index on this dataset reads 8,203 rows, writes 4,048 and increases database size by 224 KiB. With the actual migration, create-service writes increase from 25 to 26 rows while ordinary body updates remain at 26. Deletion and workspace/ID changes also maintain the index. Import write budgets must still account for existing tags, resources, audits and the additional index maintenance.
+
+This is a high-risk storage migration. Risks include database queuing during construction, insufficient space or remaining daily reads/writes, and other queries choosing a worse plan with the new index. Record database size and remaining usage before migration; stop subsequent deployment steps if migration fails. The migration adds only an index, without rewriting business fields or triggers.
+
+### Acceptance and rollback
+
+1. Reuse the complete-schema fixture in `backup-consistency.test.mjs` to exercise backup and sync routes in the same workspace context. Reproduce repeated scanning/sorting in the old schema before applying the migration, and retain existing `sync-routes.test.mjs` contract checks. Do not run `ANALYZE` beforehand and mask the defect.
+2. Upgrade existing data and compare complete backup, bootstrap and legacy default calls: notes, notebooks, bodies, tags, timestamps, resource metadata, revisions and order must match. Cover multiple workspaces with interleaved IDs, deleted notes and page boundaries. Retain authorization, consistency-version checks and rejection when the source changes.
+3. Reuse the valid 4,047-note isolated comparison and check only affected premises against the final migration. Add a scale regression with fixed-size content at 1,000/4,000 notes: cumulative memo-page reads should be approximately linear, with four times the notes consuming at most five times the reads. Plans should seek by workspace and ID range instead of rescanning on every page. Check the paging query itself, not legitimate sorting inside existing fallback subqueries. Measure actual `rows_read` / `rows_written`, including new writes and creation-time exports to detect regressions.
+4. Deployment acceptance distinguishes prior-instance migration, API data readback and D1 usage observation. Local prior-schema upgrade, API contracts and the actual migration’s scale/write-cost checks pass; deployed construction costs, plans and complete-flow row counts remain to be recorded. Reuse applicable native archive-compatibility evidence for unchanged behavior.
+
+Application rollback does not remove the index. If the index causes a regression, add a later migration dropping it while retaining business data. Do not edit executed migrations or remove the existing creation-time index. Retain the previous Worker version, database backup and independent recovery entry before deployment.
+
+### Follow-up candidates outside this iteration
+
+| Scenario | Candidate and evidence | Reason to defer |
+| --- | --- | --- |
+| Unchanged scheduled backup | Compare workspace identity and backup revision cheaply before reading full counts when changed. The current unchanged check still reads 12,313 rows at 4,047 notes. Retain old endpoint responses and pre/post-page consistency checks. | Saves one due check rather than repeated page scans. Backup API/native Worker compatibility needs its own design and acceptance. |
+| Updates with unchanged searchable content | Compare title, plain text and tags before updating an existing search document, while still inserting missing documents. An isolated SQL guard reduces four written rows to one, not zero because of autoincrement-sequence maintenance. | Smaller benefit than the paging index; the shared helper also serves ordinary editing, restoration and tag operations. Validate those consumers separately rather than changing global behavior for a local import gain. |

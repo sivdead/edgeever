@@ -26,7 +26,7 @@ Extend the former Evernote command-line guide entry with online, additive Web/de
 
 ## Unchanged boundaries
 
-- Preserve MCP imports, ordinary editing, offline queues, Rust structures, sync, backup and encrypted restore contracts. Apart from R28's export-index migration, add no database structures, global required settings or authorization scopes.
+- Preserve MCP imports, ordinary editing, offline queues, Rust structures, sync, backup and encrypted restore contracts. Apart from R28/R39's paging-index migrations, add no database structures, global required settings or authorization scopes.
 - No native mobile import entry, cross-run merging, resume after exiting the app, Obsidian plugin/inter-note conversion, remote-image capture or whole-library transaction rollback.
 - Keep installers, automatic updates, versions and release/deployment mechanisms unchanged. Existing Cloudflare upgrades retain the Worker, D1, R2, administrator and authentication Secret without resetting passwords or replacing the instance. Tests use authored sources and isolated directories, never personal libraries.
 
@@ -77,6 +77,7 @@ Per-note creation previously called `getNotebook` with repeated `COUNT/MAX`, pro
 | --- | --- | --- |
 | R27 | Use a lightweight ID/workspace/non-deleted lookup for boolean notebook existence checks in import/create, duplication, move/merge, child creation and parent changes. Preserve `getNotebook` statistics, permissions and existing missing-target errors. | Reproduce cumulative aggregates through real imports/folder creation, then verify large note/folder operations do not recount notes. Missing, foreign-workspace and deleted targets retain their existing rejection contract. |
 | R28 | Add optional opaque `cursor` / `nextCursor` to browser JSON/ZIP and Markdown exports, retaining creation-time/ID ordering. A cursor carries the continuation position and traversed offset. Cursor requests omit repeated totals by default; explicit `includeTotal=1` still returns totals. Only malformed new cursors return `invalid_export_cursor` / HTTP 400. Preserve legacy OFFSET requests, response fields, defaults and ordering. Updated consumers retain OFFSET traversal when a server provides no cursor, without adding older-server prerequisites. Add an incremental migration for a `(workspace_id, is_deleted, created_at, id)` memo index. | Reproduce full page scans first. Verify complete ZIP/Markdown ordering, resources and revisions without gaps/duplicates, tied timestamps and selected-note filters. Upgrade a real prior schema/data set, preserving fields and old calls. Local whole-traversal work grows approximately linearly with indexed continuation queries. |
+| R39 | Add `0086_memo_id_paging_index.sql` with only a `(workspace_id, id)` index on `memos`, allowing consistent-backup memo pages and initial sync to seek by workspace and ID range. Retain `0085`; do not change business fields, triggers, queries, filters, cursors, page sizes, APIs or client defaults. | Write a failing prior-schema regression before applying the migration. Retain existing data, complete traversal, workspace isolation and deleted-note behavior. Compare 1,000/4,000 notes without preceding `ANALYZE` for approximately linear reads, measuring actual D1 `rows_read` / `rows_written`, construction and insert costs. Existing creation-time exports must retain their `0085` index. |
 
 `0085_export_cursor_index.sql` adds one-time index-build reads and ongoing index write/storage costs without changing business fields. The main risk is skipped or duplicate page boundaries. Application rollback can restore old requests while leaving the index; removal requires another migration, never editing an executed file. Multipart upload retains `P + 2` R2 Class A operations per resource and at most three attempts per part. Add no import caps, required settings, automatic retries or remote reads. Measure representative local data rather than load-testing Cloudflare.
 
@@ -104,6 +105,12 @@ Per-note creation previously called `getNotebook` with repeated `COUNT/MAX`, pro
 
 Keep screenshots and operational records outside Git and attach images to the PR. The repository retains bilingual conclusions, maintainable tests and the authored source fixtures they consume. Preserve an independent recovery copy before cleaning unpublished history; do not rewrite other branches.
 
+## D1 paging reads
+
+R39 adds a `(workspace_id, id)` index, its migration, paging regressions and read/write-cost validation. Retain APIs, clients, the backup protocol and existing migration `0085`. See [plan section 9](../third-party-import-plan.md#9-d1-quota-optimization) for the choice, index costs, prior-schema upgrade acceptance and rollback. Unchanged-backup probing and search-index deduplication are outside this iteration.
+
+R39's migration, prior-schema upgrade and contract regressions pass locally. Actual D1 row counts confirm approximately linear reads and one additional index-row write per inserted memo. APIs, clients and runtime business code are unchanged. Production migration and complete-flow usage remain deployment acceptance work.
+
 ## Risks and rollback
 
 Import is high-risk data writing: partial new objects, duplicates, incorrect timestamps and resource references are the worst outcomes. Append only, retain sources, item outcomes and commit baselines; cancellation does not undo completed writes and code rollback does not delete imported notes. Removing the entry/routes leaves imported data usable as ordinary notes. Cleanup requires confirmed actual IDs, never bulk deletion by name.
@@ -112,6 +119,6 @@ Shared codec repairs affect editing round-trips for images, lists and attachment
 
 ## Completion reconciliation
 
-I01–I11, R01–R38 and C01/C02 are implemented; every behavior in the task diff maps to these entries, with no additional input restrictions, permissions or sync/backup protocol changes. Focused checks cover source formats, hierarchy/metadata/original bytes, failure retries, concurrent-edit protection and resource cleanup. See [acceptance conclusions](evidence/2026-10-27-third-party-import/README.md) for the conditions and measurements of large-library reads, cursor exports, real-browser preflight and large-body result retention. Both typechecks, the Web build and targeted lint pass.
+I01–I11, R01–R39 and C01/C02 are implemented; every behavior in the task diff maps to these entries, with no additional input restrictions, permissions or sync/backup protocol changes. Focused checks cover source formats, hierarchy/metadata/original bytes, failure retries, concurrent-edit protection and resource cleanup. See [acceptance conclusions](evidence/2026-10-27-third-party-import/README.md) for the conditions and measurements of large-library reads, cursor exports, real-browser preflight and large-body result retention. Both typechecks, the Web build and targeted lint pass.
 
-Cloudflare has R27–R30 and `0085`; the acceptance document records the real prior-instance upgrade and readback. R31–R38 are not deployed. Earlier macOS/Linux native results do not cover the latest repairs. Windows native, USB mobile devices, older-client editing, AppImage installation/cross-version updates and Docker container deployment remain unverified; builds and driver-level checks do not replace those flows.
+Cloudflare has R27–R30 and `0085`; the acceptance document records the real prior-instance upgrade and readback. R31–R39 and `0086` are not deployed. Earlier macOS/Linux native results do not cover the latest repairs. Windows native, USB mobile devices, older-client editing, AppImage installation/cross-version updates and Docker container deployment remain unverified; builds and driver-level checks do not replace those flows.
