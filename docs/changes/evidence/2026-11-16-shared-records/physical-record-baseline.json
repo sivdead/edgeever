@@ -1,0 +1,1267 @@
+{
+  "environment": {
+    "platform": "Darwin",
+    "architecture": "arm64",
+    "bun": "1.3.14",
+    "sqlite": "3.54.0"
+  },
+  "scope": "Local isolated SQLite only. No cloud D1, Workers CPU, billing or UI acceptance. Sequential warmed process.",
+  "tests": {
+    "passed": 11,
+    "failed": 0,
+    "assertions": 266,
+    "typecheck": "passed; Bun runner import excluded from Workers/Node module typing"
+  },
+  "workloads": [
+    {
+      "name": "wide",
+      "tableCount": 2,
+      "rowsPerTable": 1950,
+      "columnsPerTable": 38,
+      "trialsPerCase": 50,
+      "variants": [
+        {
+          "variant": "json_global",
+          "databaseBytes": 18714624,
+          "viewIndexBytes": 212992,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.1292499999995016,
+              "minTableMedianMs": 0.11229199999979755,
+              "maxTableMedianMs": 0.14620799999920564,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 83458
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.10006249999969441,
+              "minTableMedianMs": 0.09308299999975134,
+              "maxTableMedianMs": 0.10704199999963748,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 89506
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.12779200000022684,
+              "minTableMedianMs": 0.10525000000052387,
+              "maxTableMedianMs": 0.1503339999999298,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 89506
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.04387499999984357,
+              "minTableMedianMs": 0.03662499999973079,
+              "maxTableMedianMs": 0.051124999999956344,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 17551
+            },
+            "empty": {
+              "medianOfTableMediansMs": 2.8477295000002414,
+              "minTableMedianMs": 2.685667000000649,
+              "maxTableMedianMs": 3.009791999999834,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                61,
+                61
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                62,
+                62
+              ],
+              "changedPagesExcludingHeader": [
+                7,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                104,
+                104
+              ],
+              "changedPagesExcludingHeader": [
+                32,
+                20
+              ]
+            }
+          }
+        },
+        {
+          "variant": "json_partial",
+          "databaseBytes": 18571264,
+          "viewIndexBytes": 65536,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.14306200000009994,
+              "minTableMedianMs": 0.12529100000028848,
+              "maxTableMedianMs": 0.1608329999999114,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 83458
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.1122085000001789,
+              "minTableMedianMs": 0.10279200000059063,
+              "maxTableMedianMs": 0.12162499999976717,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 89506
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.13899949999995442,
+              "minTableMedianMs": 0.12545800000043528,
+              "maxTableMedianMs": 0.15254099999947357,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 89506
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.051582999999936874,
+              "minTableMedianMs": 0.04533300000002782,
+              "maxTableMedianMs": 0.057832999999845924,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 17551
+            },
+            "empty": {
+              "medianOfTableMediansMs": 2.84768750000012,
+              "minTableMedianMs": 2.6905839999999444,
+              "maxTableMedianMs": 3.0047910000002958,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                60,
+                60
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                61,
+                61
+              ],
+              "changedPagesExcludingHeader": [
+                7,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                104,
+                104
+              ],
+              "changedPagesExcludingHeader": [
+                27,
+                19
+              ]
+            }
+          }
+        },
+        {
+          "variant": "physical",
+          "databaseBytes": 14684160,
+          "viewIndexBytes": 65536,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.38377100000025166,
+              "minTableMedianMs": 0.34962500000074215,
+              "maxTableMedianMs": 0.4179169999997612,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 70096
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.3175205000002279,
+              "minTableMedianMs": 0.27683299999989686,
+              "maxTableMedianMs": 0.35820800000055897,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 76144
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.32297899999957735,
+              "minTableMedianMs": 0.28341699999964476,
+              "maxTableMedianMs": 0.36254099999950995,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 76144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.1449999999999818,
+              "minTableMedianMs": 0.13579200000003766,
+              "maxTableMedianMs": 0.15420799999992596,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 14931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 1.2641250000001492,
+              "minTableMedianMs": 0.9099999999998545,
+              "maxTableMedianMs": 1.6182500000004438,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                62,
+                62
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                73,
+                73
+              ],
+              "changedPagesExcludingHeader": [
+                7,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_regular",
+                "ee787r_rich"
+              ],
+              "vmSteps": [
+                120,
+                120
+              ],
+              "changedPagesExcludingHeader": [
+                19,
+                19
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "scale-2",
+      "tableCount": 2,
+      "rowsPerTable": 1000,
+      "columnsPerTable": 10,
+      "trialsPerCase": 20,
+      "variants": [
+        {
+          "variant": "json_global",
+          "databaseBytes": 2744320,
+          "viewIndexBytes": 122880,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.04639550000001691,
+              "minTableMedianMs": 0.04245800000012423,
+              "maxTableMedianMs": 0.05033299999990959,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.05541700000003402,
+              "minTableMedianMs": 0.04245900000000802,
+              "maxTableMedianMs": 0.06837500000006003,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.06483349999996335,
+              "minTableMedianMs": 0.047041999999919426,
+              "maxTableMedianMs": 0.08262500000000728,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.029000499999938256,
+              "minTableMedianMs": 0.021583999999847947,
+              "maxTableMedianMs": 0.036417000000028565,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.3717914999999721,
+              "minTableMedianMs": 0.34216700000001765,
+              "maxTableMedianMs": 0.4014159999999265,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                61,
+                61
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                62,
+                62
+              ],
+              "changedPagesExcludingHeader": [
+                7,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                104,
+                104
+              ],
+              "changedPagesExcludingHeader": [
+                31,
+                19
+              ]
+            }
+          }
+        },
+        {
+          "variant": "json_partial",
+          "databaseBytes": 2662400,
+          "viewIndexBytes": 40960,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.050542000000064036,
+              "minTableMedianMs": 0.0437090000000353,
+              "maxTableMedianMs": 0.05737500000009277,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.060875000000010004,
+              "minTableMedianMs": 0.05162500000005821,
+              "maxTableMedianMs": 0.0701249999999618,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.07433300000002419,
+              "minTableMedianMs": 0.060458000000153334,
+              "maxTableMedianMs": 0.08820799999989504,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.03662499999995816,
+              "minTableMedianMs": 0.030833000000029642,
+              "maxTableMedianMs": 0.042416999999886684,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.3769794999999476,
+              "minTableMedianMs": 0.3438340000000153,
+              "maxTableMedianMs": 0.41012499999987995,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                60,
+                60
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                61,
+                61
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                104,
+                104
+              ],
+              "changedPagesExcludingHeader": [
+                26,
+                17
+              ]
+            }
+          }
+        },
+        {
+          "variant": "physical",
+          "databaseBytes": 2387968,
+          "viewIndexBytes": 40960,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.13208299999996598,
+              "minTableMedianMs": 0.12095799999997325,
+              "maxTableMedianMs": 0.1432079999999587,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 19089
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.1302294999999276,
+              "minTableMedianMs": 0.11804199999983211,
+              "maxTableMedianMs": 0.1424170000000231,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20453
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.1374795000000404,
+              "minTableMedianMs": 0.12550000000010186,
+              "maxTableMedianMs": 0.14945899999997891,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20452
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.07514550000007603,
+              "minTableMedianMs": 0.07300000000009277,
+              "maxTableMedianMs": 0.07729100000005928,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4011
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.13154199999996763,
+              "minTableMedianMs": 0.11783399999990252,
+              "maxTableMedianMs": 0.14525000000003274,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                34,
+                34
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                45,
+                45
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_01"
+              ],
+              "vmSteps": [
+                92,
+                92
+              ],
+              "changedPagesExcludingHeader": [
+                17,
+                17
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "scale-10",
+      "tableCount": 10,
+      "rowsPerTable": 1000,
+      "columnsPerTable": 10,
+      "trialsPerCase": 20,
+      "variants": [
+        {
+          "variant": "json_global",
+          "databaseBytes": 11952128,
+          "viewIndexBytes": 2744320,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.06466650000038499,
+              "minTableMedianMs": 0.06020800000078452,
+              "maxTableMedianMs": 0.07070800000019517,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.07318799999984549,
+              "minTableMedianMs": 0.06741699999929551,
+              "maxTableMedianMs": 0.08225000000038563,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.0924790000003668,
+              "minTableMedianMs": 0.08483299999988958,
+              "maxTableMedianMs": 0.09941600000001927,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.04756249999991269,
+              "minTableMedianMs": 0.045041000000310305,
+              "maxTableMedianMs": 0.05254199999944831,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.4079584999999497,
+              "minTableMedianMs": 0.3610420000004524,
+              "maxTableMedianMs": 0.45629100000041944,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                165,
+                165
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                166,
+                166
+              ],
+              "changedPagesExcludingHeader": [
+                7,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                176,
+                176
+              ],
+              "changedPagesExcludingHeader": [
+                71,
+                27
+              ]
+            }
+          }
+        },
+        {
+          "variant": "json_partial",
+          "databaseBytes": 9412608,
+          "viewIndexBytes": 204800,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.07064599999921484,
+              "minTableMedianMs": 0.05924999999933789,
+              "maxTableMedianMs": 0.0757499999999709,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.080145999999786,
+              "minTableMedianMs": 0.0704169999999067,
+              "maxTableMedianMs": 0.08558300000004238,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.09356200000001991,
+              "minTableMedianMs": 0.08708299999943847,
+              "maxTableMedianMs": 0.10262500000044383,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.05508350000036444,
+              "minTableMedianMs": 0.05237499999930151,
+              "maxTableMedianMs": 0.05658300000050076,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.4123540000000503,
+              "minTableMedianMs": 0.38075000000026193,
+              "maxTableMedianMs": 0.45287499999994907,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                132,
+                132
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                133,
+                133
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                152,
+                152
+              ],
+              "changedPagesExcludingHeader": [
+                26,
+                17
+              ]
+            }
+          }
+        },
+        {
+          "variant": "physical",
+          "databaseBytes": 8138752,
+          "viewIndexBytes": 204800,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.1365205000001879,
+              "minTableMedianMs": 0.12483400000019174,
+              "maxTableMedianMs": 0.15637499999957072,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 19089
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.13481200000023819,
+              "minTableMedianMs": 0.11779099999967002,
+              "maxTableMedianMs": 0.1509169999999358,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20453
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.14054199999964112,
+              "minTableMedianMs": 0.11954200000036508,
+              "maxTableMedianMs": 0.16625000000021828,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20452
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.07768750000013824,
+              "minTableMedianMs": 0.07145799999943847,
+              "maxTableMedianMs": 0.08516600000075414,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4011
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.13268700000071476,
+              "minTableMedianMs": 0.11937499999930878,
+              "maxTableMedianMs": 0.15675000000010186,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                34,
+                34
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                45,
+                45
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_09"
+              ],
+              "vmSteps": [
+                92,
+                92
+              ],
+              "changedPagesExcludingHeader": [
+                17,
+                17
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "scale-30",
+      "tableCount": 30,
+      "rowsPerTable": 1000,
+      "columnsPerTable": 10,
+      "trialsPerCase": 20,
+      "variants": [
+        {
+          "variant": "json_global",
+          "databaseBytes": 50278400,
+          "viewIndexBytes": 24576000,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.0916045000003578,
+              "minTableMedianMs": 0.08579099999951723,
+              "maxTableMedianMs": 0.10270799999852898,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.10370849999981147,
+              "minTableMedianMs": 0.09779100000014296,
+              "maxTableMedianMs": 0.11787500000173168,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.15883299999950395,
+              "minTableMedianMs": 0.14858300000014424,
+              "maxTableMedianMs": 0.16879100000005565,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.07231249999949796,
+              "minTableMedianMs": 0.0667090000006283,
+              "maxTableMedianMs": 0.07799999999951979,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.5075630000001183,
+              "minTableMedianMs": 0.453125,
+              "maxTableMedianMs": 0.5561669999988226,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                425,
+                425
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                426,
+                426
+              ],
+              "changedPagesExcludingHeader": [
+                9,
+                7
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                356,
+                356
+              ],
+              "changedPagesExcludingHeader": [
+                238,
+                49
+              ]
+            }
+          }
+        },
+        {
+          "variant": "json_partial",
+          "databaseBytes": 26316800,
+          "viewIndexBytes": 614400,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.09225049999895418,
+              "minTableMedianMs": 0.08433299999887822,
+              "maxTableMedianMs": 0.10079199999927368,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 23781
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.10249999999996362,
+              "minTableMedianMs": 0.09533399999963876,
+              "maxTableMedianMs": 0.11475000000064028,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25145
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.11820850000003702,
+              "minTableMedianMs": 0.10558300000047893,
+              "maxTableMedianMs": 0.12858400000004622,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 25144
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.07147900000018126,
+              "minTableMedianMs": 0.06737499999871943,
+              "maxTableMedianMs": 0.076666999999361,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4931
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.5001460000003135,
+              "minTableMedianMs": 0.4495420000002923,
+              "maxTableMedianMs": 0.5550830000011047,
+              "metadataStatements": [
+                2
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                312,
+                312
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                313,
+                313
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                272,
+                272
+              ],
+              "changedPagesExcludingHeader": [
+                33,
+                19
+              ]
+            }
+          }
+        },
+        {
+          "variant": "physical",
+          "databaseBytes": 22466560,
+          "viewIndexBytes": 614400,
+          "queries": {
+            "default": {
+              "medianOfTableMediansMs": 0.14962500000001455,
+              "minTableMedianMs": 0.131375000000844,
+              "maxTableMedianMs": 0.16433299999880546,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 19089
+            },
+            "sorted": {
+              "medianOfTableMediansMs": 0.14185450000059063,
+              "minTableMedianMs": 0.12149999999928696,
+              "maxTableMedianMs": 0.1571250000015425,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20453
+            },
+            "next_page": {
+              "medianOfTableMediansMs": 0.14777050000066083,
+              "minTableMedianMs": 0.12883299999884912,
+              "maxTableMedianMs": 0.16820799999914016,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 51,
+              "maxAdapterResultBytes": 20452
+            },
+            "sparse": {
+              "medianOfTableMediansMs": 0.07893749999948341,
+              "minTableMedianMs": 0.07266600000002654,
+              "maxTableMedianMs": 0.08316700000068522,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 10,
+              "maxAdapterResultBytes": 4011
+            },
+            "empty": {
+              "medianOfTableMediansMs": 0.19797950000065612,
+              "minTableMedianMs": 0.17208299999947485,
+              "maxTableMedianMs": 0.2301659999993717,
+              "metadataStatements": [
+                3
+              ],
+              "maxDbReturnedRows": 0,
+              "maxAdapterResultBytes": 2
+            }
+          },
+          "writes": {
+            "update_plain": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                34,
+                34
+              ],
+              "changedPagesExcludingHeader": [
+                1,
+                1
+              ]
+            },
+            "update_indexed": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                45,
+                45
+              ],
+              "changedPagesExcludingHeader": [
+                4,
+                4
+              ]
+            },
+            "insert": {
+              "fixtures": [
+                "ee787r_scale_00",
+                "ee787r_scale_29"
+              ],
+              "vmSteps": [
+                92,
+                92
+              ],
+              "changedPagesExcludingHeader": [
+                17,
+                17
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "queries": 660,
+  "timedServiceCalls": 14100
+}

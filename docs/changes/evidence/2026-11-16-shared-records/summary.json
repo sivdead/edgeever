@@ -1,0 +1,1135 @@
+{
+  "baseline": "a18db6a473aacf3f9eba463e66cdb57fe5bf3b8e",
+  "environment": {
+    "bun": "1.3.14",
+    "sqliteForVmMetrics": "3.54.0"
+  },
+  "boundary": "Local synthetic data only. SQLite VM instructions and adapter-returned rows are not D1 billed rows or Workers CPU. Timings include the local service but exclude HTTP/network/rendering.",
+  "checks": {
+    "targetedTests": 28,
+    "assertions": 166,
+    "rootTypecheck": "passed",
+    "mobileTypecheck": "passed",
+    "webBuild": "passed",
+    "zipRoundTrip": "Existing ZIP v2: 8 rows, current snapshot plus 2 cross-type historical revisions, null values and 7 attachment bytes; source closed before restore."
+  },
+  "groups": [
+    {
+      "name": "2tables-1000x10",
+      "tables": 2,
+      "rows": 1000,
+      "columns": 10,
+      "databaseBytes": 10981376,
+      "singleRowWriteVmSteps": 538,
+      "candidateObjectsBytes": 3379200,
+      "objects": [
+        {
+          "name": "ee_table_assertion",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_commits",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_heads",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_records",
+          "bytes": 1843200
+        },
+        {
+          "name": "ee_table_search_config",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_search_data",
+          "bytes": 196608
+        },
+        {
+          "name": "ee_table_search_docsize",
+          "bytes": 24576
+        },
+        {
+          "name": "ee_table_search_idx",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_jobs",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_values",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_versions",
+          "bytes": 671744
+        },
+        {
+          "name": "ee_table_versions_position",
+          "bytes": 139264
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_commits_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_1",
+          "bytes": 139264
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_2",
+          "bytes": 135168
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_jobs_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_versions_1",
+          "bytes": 143360
+        }
+      ],
+      "flows": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 8.734375,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 20333,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 6.216125000000147,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34743,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 0.8544589999999062,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8407,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 31.515499999999975,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992024,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 4.501250000000027,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 18477,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 4.7153749999999945,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34742,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 0.8684579999999187,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8406,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 36.74654200000009,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992003,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10tables-1000x10",
+      "tables": 10,
+      "rows": 1000,
+      "columns": 10,
+      "databaseBytes": 53506048,
+      "singleRowWriteVmSteps": 642,
+      "candidateObjectsBytes": 17698816,
+      "objects": [
+        {
+          "name": "ee_table_assertion",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_commits",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_heads",
+          "bytes": 20480
+        },
+        {
+          "name": "ee_table_records",
+          "bytes": 10043392
+        },
+        {
+          "name": "ee_table_search_config",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_search_data",
+          "bytes": 856064
+        },
+        {
+          "name": "ee_table_search_docsize",
+          "bytes": 94208
+        },
+        {
+          "name": "ee_table_search_idx",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_jobs",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_values",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_versions",
+          "bytes": 3657728
+        },
+        {
+          "name": "ee_table_versions_position",
+          "bytes": 688128
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_commits_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_1",
+          "bytes": 696320
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_2",
+          "bytes": 708608
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_jobs_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_versions_1",
+          "bytes": 708608
+        }
+      ],
+      "flows": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 6.029208000000381,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 20389,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 8.36391599999979,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34743,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 1.3216670000001614,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8407,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 38.116333999999824,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992024,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 6.464042000000063,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 18478,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 6.06704099999979,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34743,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 1.209957999999915,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8407,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 46.581916999999976,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992024,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "30tables-1000x10",
+      "tables": 30,
+      "rows": 1000,
+      "columns": 10,
+      "databaseBytes": 160632832,
+      "singleRowWriteVmSteps": 903,
+      "candidateObjectsBytes": 53338112,
+      "objects": [
+        {
+          "name": "ee_table_assertion",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_commits",
+          "bytes": 36864
+        },
+        {
+          "name": "ee_table_heads",
+          "bytes": 45056
+        },
+        {
+          "name": "ee_table_records",
+          "bytes": 30572544
+        },
+        {
+          "name": "ee_table_search_config",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_search_data",
+          "bytes": 2543616
+        },
+        {
+          "name": "ee_table_search_docsize",
+          "bytes": 290816
+        },
+        {
+          "name": "ee_table_search_idx",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_jobs",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_values",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_versions",
+          "bytes": 11120640
+        },
+        {
+          "name": "ee_table_versions_position",
+          "bytes": 1998848
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 16384
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_commits_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_1",
+          "bytes": 2060288
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_2",
+          "bytes": 2056192
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_jobs_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_versions_1",
+          "bytes": 2076672
+        }
+      ],
+      "flows": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 3.5635409999995318,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 20529,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 4.503042000000278,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34743,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 0.9070410000003903,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8407,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 25.07429200000115,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992024,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 3.8390419999996084,
+          "returnedRows": 1079,
+          "exactCounts": 0,
+          "sqliteVmSteps": 18478,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "elapsedMs": 6.104957999999897,
+          "returnedRows": 903,
+          "exactCounts": 1,
+          "sqliteVmSteps": 34743,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 0.6387080000004062,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 8407,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "elapsedMs": 29.63287499999933,
+          "returnedRows": 1080,
+          "exactCounts": 1,
+          "sqliteVmSteps": 992024,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2tables-1950x38-rich",
+      "tables": 2,
+      "rows": 1950,
+      "columns": 38,
+      "databaseBytes": 174166016,
+      "singleRowWriteVmSteps": 538,
+      "candidateObjectsBytes": 46243840,
+      "objects": [
+        {
+          "name": "ee_table_assertion",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_commits",
+          "bytes": 12288
+        },
+        {
+          "name": "ee_table_heads",
+          "bytes": 12288
+        },
+        {
+          "name": "ee_table_records",
+          "bytes": 27709440
+        },
+        {
+          "name": "ee_table_search_config",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_search_data",
+          "bytes": 1257472
+        },
+        {
+          "name": "ee_table_search_docsize",
+          "bytes": 45056
+        },
+        {
+          "name": "ee_table_search_idx",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_jobs",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_type_values",
+          "bytes": 4096
+        },
+        {
+          "name": "ee_table_versions",
+          "bytes": 16015360
+        },
+        {
+          "name": "ee_table_versions_position",
+          "bytes": 266240
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 32768
+        },
+        {
+          "name": "ee_table_view_<generated>",
+          "bytes": 28672
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_commits_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_heads_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_1",
+          "bytes": 274432
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_records_2",
+          "bytes": 262144
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_jobs_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_1",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_type_values_2",
+          "bytes": 4096
+        },
+        {
+          "name": "sqlite_autoindex_ee_table_versions_1",
+          "bytes": 282624
+        }
+      ],
+      "flows": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1950,
+          "pages": 39,
+          "elapsedMs": 17.204083000000537,
+          "returnedRows": 2105,
+          "exactCounts": 0,
+          "sqliteVmSteps": 37908,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 1635,
+          "pages": 33,
+          "elapsedMs": 24.011959000001298,
+          "returnedRows": 1767,
+          "exactCounts": 1,
+          "sqliteVmSteps": 78374,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 4.244332999998733,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 16007,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1950,
+          "pages": 39,
+          "elapsedMs": 512.3377920000003,
+          "returnedRows": 2106,
+          "exactCounts": 1,
+          "sqliteVmSteps": 3758012,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "default",
+          "rows": 1950,
+          "pages": 39,
+          "elapsedMs": 22.195792000000438,
+          "returnedRows": 2105,
+          "exactCounts": 0,
+          "sqliteVmSteps": 36052,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "amount",
+          "rows": 1635,
+          "pages": 33,
+          "elapsedMs": 22.898708999999144,
+          "returnedRows": 1767,
+          "exactCounts": 1,
+          "sqliteVmSteps": 78373,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "elapsedMs": 4.633041999999477,
+          "returnedRows": 4,
+          "exactCounts": 1,
+          "sqliteVmSteps": 16006,
+          "plans": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-mixed",
+          "rows": 1950,
+          "pages": 39,
+          "elapsedMs": 568.6895829999994,
+          "returnedRows": 2106,
+          "exactCounts": 1,
+          "sqliteVmSteps": 3757972,
+          "plans": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "apps/api/src/shared-table-index.ts": "a3feecb22854579263d75f77332aeb8557a7458881ea5487343bebbc344c5302",
+    "apps/api/src/shared-table-query.ts": "a9b73d7f1359df2600ce8b7126ac7b0ba2b7845993e6511d3136e3744b689bc2",
+    "apps/api/src/shared-table-store.integration.test.mjs": "c267855205434964135b437c3337ae447f3ae9ebd96853faa40d3cd91bcd2867",
+    "apps/api/src/shared-table-store.ts": "d2f177a2a6fae23b2165967217216d53cfbd4799ae7c17259cb32e1ba0928c9e",
+    "apps/api/src/shared-table-type-change.ts": "2fbb3609c5b71e1d0366bc554c5a5039bb41e587d937d06dd740a8f9f7efc794",
+    "apps/api/src/table-record-query.ts": "e709ad4400268be11091d2f4e92148df439cfdedc5dbd603ee72c6673a810617",
+    "packages/shared/src/table-conversion.test.mjs": "2d2810e02de2c8f57844469730e598a56b962727e26128f5f9e503363155443a",
+    "packages/shared/src/table-conversion.ts": "06168ac3645685fc69be0b8b45cbd4b49897672e708733f4a85b2f18740061ce",
+    "packages/shared/src/table.ts": "e65567e3df6ec8c3ca67136e50dc930e4a2613dd015d54f699b7a34570778143",
+    "scripts/experiments/shared-records/README.md": "71c97022ae9eb72866f48d4f0064270698e58cedfd4d655855752bab65662068",
+    "scripts/experiments/shared-records/routes.ts": "acab594332fb010bbe74254706e2e6eb45b4acd7fc745431af7e4ec565ba1254",
+    "scripts/experiments/shared-records/schema.sql": "da214843b7a22e3a9712f44aa87563425190b30a6c7ba12567f8b2a1a3caae8d",
+    "scripts/experiments/shared-records/sqlite-metrics.py": "a1b3ee1ca3c694c4a0dbdc5d8db59c8de914c1bcac8a74ec3beb700b4572b52f",
+    "scripts/experiments/shared-records/support.mjs": "a4bee785aa5f3771c47428fdf06f6004ee66a43a9aff0037ceda1fa60f8c0008",
+    "scripts/experiments/shared-records/verify.mjs": "9dd797ab8b179fad2b5de42356dc9ec88ee67ffc6611d0a2ac6aeaedae246e04"
+  }
+}

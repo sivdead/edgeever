@@ -1,0 +1,1810 @@
+{
+  "baselineEvidence": "summary.json",
+  "scope": "Local query-plan fix for small select prefixes and an existing compatible secondary-sort index. Other valid queries retain their previous path.",
+  "metricBoundary": "Both SQL versions replay against the exact same pre-write local database. SQLite VM steps are not D1 billed reads or Workers CPU.",
+  "checks": {
+    "targetedTests": 34,
+    "assertions": 207,
+    "rootTypecheck": "passed",
+    "mobileTypecheckAndWebBuild": "Previous results reused: no mobile, client, shared package or Web source changed in this query fix.",
+    "comparisonPairs": 32,
+    "schemaOrIndexChanges": false
+  },
+  "groups": [
+    {
+      "name": "10tables-1000x10",
+      "sqliteVersion": "3.54.0",
+      "pairs": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 20389,
+          "afterVmSteps": 18478,
+          "reduction": 0.0937270096620727,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34743,
+          "afterVmSteps": 34743,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8407,
+          "afterVmSteps": 8407,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992024,
+          "afterVmSteps": 140305,
+          "reduction": 0.8585669298323427,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 18478,
+          "afterVmSteps": 18478,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34743,
+          "afterVmSteps": 34743,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8407,
+          "afterVmSteps": 8407,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 9,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992024,
+          "afterVmSteps": 140305,
+          "reduction": 0.8585669298323427,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2tables-1000x10",
+      "sqliteVersion": "3.54.0",
+      "pairs": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 20333,
+          "afterVmSteps": 18478,
+          "reduction": 0.09123100378694737,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34743,
+          "afterVmSteps": 34743,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8407,
+          "afterVmSteps": 8407,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992024,
+          "afterVmSteps": 140305,
+          "reduction": 0.8585669298323427,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 18477,
+          "afterVmSteps": 18477,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34742,
+          "afterVmSteps": 34742,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8406,
+          "afterVmSteps": 8406,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992003,
+          "afterVmSteps": 140304,
+          "reduction": 0.8585649438560166,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2tables-1950x38-rich",
+      "sqliteVersion": "3.54.0",
+      "pairs": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1950,
+          "pages": 39,
+          "exactCounts": 0,
+          "returnedRowsBefore": 2105,
+          "returnedRowsAfter": 2105,
+          "beforeVmSteps": 37908,
+          "afterVmSteps": 36053,
+          "reduction": 0.04893426189722483,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 1635,
+          "pages": 33,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1767,
+          "returnedRowsAfter": 1767,
+          "beforeVmSteps": 78374,
+          "afterVmSteps": 78374,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 16007,
+          "afterVmSteps": 16007,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1950,
+          "pages": 39,
+          "exactCounts": 1,
+          "returnedRowsBefore": 2106,
+          "returnedRowsAfter": 2106,
+          "beforeVmSteps": 3758012,
+          "afterVmSteps": 276007,
+          "reduction": 0.926555050915218,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "default",
+          "rows": 1950,
+          "pages": 39,
+          "exactCounts": 0,
+          "returnedRowsBefore": 2105,
+          "returnedRowsAfter": 2105,
+          "beforeVmSteps": 36052,
+          "afterVmSteps": 36052,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "amount",
+          "rows": 1635,
+          "pages": 33,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1767,
+          "returnedRowsAfter": 1767,
+          "beforeVmSteps": 78373,
+          "afterVmSteps": 78373,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 16006,
+          "afterVmSteps": 16006,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 1,
+          "view": "temporary-mixed",
+          "rows": 1950,
+          "pages": 39,
+          "exactCounts": 1,
+          "returnedRowsBefore": 2106,
+          "returnedRowsAfter": 2106,
+          "beforeVmSteps": 3757972,
+          "afterVmSteps": 276006,
+          "reduction": 0.9265545352652973,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "30tables-1000x10",
+      "sqliteVersion": "3.54.0",
+      "pairs": [
+        {
+          "table": 0,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 20529,
+          "afterVmSteps": 18478,
+          "reduction": 0.09990744800038964,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34743,
+          "afterVmSteps": 34743,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8407,
+          "afterVmSteps": 8407,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 0,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992024,
+          "afterVmSteps": 140305,
+          "reduction": 0.8585669298323427,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "default",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 0,
+          "returnedRowsBefore": 1079,
+          "returnedRowsAfter": 1079,
+          "beforeVmSteps": 18478,
+          "afterVmSteps": 18478,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)"
+            ],
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position>? AND position<?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "amount",
+          "rows": 835,
+          "pages": 17,
+          "exactCounts": 1,
+          "returnedRowsBefore": 903,
+          "returnedRowsAfter": 903,
+          "beforeVmSteps": 34743,
+          "afterVmSteps": 34743,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ],
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>? AND <expr><?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "temporary-empty",
+          "rows": 0,
+          "pages": 1,
+          "exactCounts": 1,
+          "returnedRowsBefore": 4,
+          "returnedRowsAfter": 4,
+          "beforeVmSteps": 8407,
+          "afterVmSteps": 8407,
+          "reduction": 0,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>>?)"
+            ]
+          ]
+        },
+        {
+          "table": 29,
+          "view": "temporary-mixed",
+          "rows": 1000,
+          "pages": 20,
+          "exactCounts": 1,
+          "returnedRowsBefore": 1080,
+          "returnedRowsAfter": 1080,
+          "beforeVmSteps": 992024,
+          "afterVmSteps": 140305,
+          "reduction": 0.8585669298323427,
+          "plansBefore": [
+            [
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ],
+          "plansAfter": [
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 9",
+              "SCAN grouped_page_1",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 7",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_2",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 11",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "SCAN grouped_page_3",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_4",
+              "SCALAR SUBQUERY 17",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 18",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 19",
+              "SCAN grouped_page_2",
+              "SCALAR SUBQUERY 20",
+              "SCAN grouped_page_3",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 16",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_4",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ],
+            [
+              "CO-ROUTINE p",
+              "COMPOUND QUERY",
+              "LEFT-MOST SUBQUERY",
+              "MATERIALIZE grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position>? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_0",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_1",
+              "SCALAR SUBQUERY 4",
+              "SCAN grouped_page_0",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr><?)",
+              "SCAN grouped_page_1",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_2",
+              "SCALAR SUBQUERY 7",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 8",
+              "SCAN grouped_page_1",
+              "SEARCH r USING INDEX ee_table_view_<generated> (<expr>=? AND position<?)",
+              "USE TEMP B-TREE FOR ORDER BY",
+              "SCAN grouped_page_2",
+              "UNION ALL",
+              "MATERIALIZE grouped_page_3",
+              "SCALAR SUBQUERY 12",
+              "SCAN grouped_page_0",
+              "SCALAR SUBQUERY 13",
+              "SCAN grouped_page_1",
+              "SCALAR SUBQUERY 14",
+              "SCAN grouped_page_2",
+              "SCAN r USING INDEX ee_table_view_<generated>",
+              "LIST SUBQUERY 11",
+              "SCAN json_each VIRTUAL TABLE INDEX 1:",
+              "CREATE BLOOM FILTER",
+              "SCAN grouped_page_3",
+              "SCAN p",
+              "SEARCH r USING INDEX sqlite_autoindex_ee_table_records_2 (workspace_id=? AND table_id=? AND position=?)",
+              "USE TEMP B-TREE FOR ORDER BY"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "apps/api/src/shared-table-index.ts": "a3feecb22854579263d75f77332aeb8557a7458881ea5487343bebbc344c5302",
+    "apps/api/src/shared-table-query-budget.test.mjs": "29c2a11f535f7c3c03caa2a7117b1da9ea2c4521954f10c36c5e30bd316a1f43",
+    "apps/api/src/shared-table-query.ts": "965f2f1559a481b55546eb3a528c03ae751664c2b2d3ce7a7d42f6fd9033d28e",
+    "apps/api/src/shared-table-store.integration.test.mjs": "c267855205434964135b437c3337ae447f3ae9ebd96853faa40d3cd91bcd2867",
+    "apps/api/src/shared-table-store.ts": "d2f177a2a6fae23b2165967217216d53cfbd4799ae7c17259cb32e1ba0928c9e",
+    "apps/api/src/shared-table-type-change.ts": "2fbb3609c5b71e1d0366bc554c5a5039bb41e587d937d06dd740a8f9f7efc794",
+    "apps/api/src/table-record-query.ts": "16cae590abec44bbc9b60ab22146a7f489432abc54e43cff43bff057413189ab",
+    "packages/shared/src/table-conversion.test.mjs": "2d2810e02de2c8f57844469730e598a56b962727e26128f5f9e503363155443a",
+    "packages/shared/src/table-conversion.ts": "06168ac3645685fc69be0b8b45cbd4b49897672e708733f4a85b2f18740061ce",
+    "packages/shared/src/table.ts": "e65567e3df6ec8c3ca67136e50dc930e4a2613dd015d54f699b7a34570778143",
+    "scripts/experiments/shared-records/README.md": "85ff51d4e732fd5667037a8a3dd3c14fe0564f99d9c4c631274b1c6e2ed938f6",
+    "scripts/experiments/shared-records/compare-queries.mjs": "b5820cd4b1e8a5f392835f66d6aa4bd2936a3b570b6db175fa68581a7796efad",
+    "scripts/experiments/shared-records/query-metrics.mjs": "066dba6684621e72ec45dbca2a2a19a5cb5b3e2e8ab5c9330c35140729d00bd9",
+    "scripts/experiments/shared-records/routes.ts": "acab594332fb010bbe74254706e2e6eb45b4acd7fc745431af7e4ec565ba1254",
+    "scripts/experiments/shared-records/schema.sql": "da214843b7a22e3a9712f44aa87563425190b30a6c7ba12567f8b2a1a3caae8d",
+    "scripts/experiments/shared-records/sqlite-metrics.py": "0b1ba64138cbff4956f61d01ed6b96764f45a0b92e21c469fccb8e3375298881",
+    "scripts/experiments/shared-records/support.mjs": "a4bee785aa5f3771c47428fdf06f6004ee66a43a9aff0037ceda1fa60f8c0008",
+    "scripts/experiments/shared-records/verify.mjs": "e3dd9f3d6796602ba8b8671255157d4b2185e5d646cb11f7595019d87a3688d9"
+  },
+  "baselineSourceSha256": {
+    "apps/api/src/table-record-query.ts": "e709ad4400268be11091d2f4e92148df439cfdedc5dbd603ee72c6673a810617",
+    "apps/api/src/shared-table-query.ts": "a9b73d7f1359df2600ce8b7126ac7b0ba2b7845993e6511d3136e3744b689bc2",
+    "apps/api/src/shared-table-store.integration.test.mjs": "c267855205434964135b437c3337ae447f3ae9ebd96853faa40d3cd91bcd2867",
+    "scripts/experiments/shared-records/verify.mjs": "9dd797ab8b179fad2b5de42356dc9ec88ee67ffc6611d0a2ac6aeaedae246e04",
+    "scripts/experiments/shared-records/sqlite-metrics.py": "a1b3ee1ca3c694c4a0dbdc5d8db59c8de914c1bcac8a74ec3beb700b4572b52f"
+  }
+}

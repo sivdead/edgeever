@@ -1,0 +1,1473 @@
+{
+  "environment": {
+    "bun": "1.3.14",
+    "sqlite": "3.54.0",
+    "cloudD1": false
+  },
+  "attribution": {
+    "cases": 80,
+    "trials": 150,
+    "timedCalls": 12000,
+    "metrics": {
+      "broad_unsorted": {
+        "groups_only": {
+          "medianServiceMs": 0.17450050000002193,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005187999999634485,
+            "data": 0.12231249999990723,
+            "applicationRemainder": 0.04112500000042019
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.18668800000000374,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005229000000099404,
+            "data": 0.13325000000008913,
+            "applicationRemainder": 0.03987400000050911
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.14162550000014562,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005313000000114698,
+            "data": 0.09056250000003274,
+            "applicationRemainder": 0.03989549999982955
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.1405829999996513,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.00506300000029114,
+            "data": 0.09020799999984774,
+            "applicationRemainder": 0.040083499999809646
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.1744584999999006,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005062500000349246,
+            "data": 0.12422900000001391,
+            "applicationRemainder": 0.03947900000048321
+          }
+        }
+      },
+      "default": {
+        "groups_only": {
+          "medianServiceMs": 0.1625415000000885,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0047285000000556465,
+            "data": 0.11133299999983137,
+            "applicationRemainder": 0.03970800000001873
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.1708129999999528,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.00487549999957082,
+            "data": 0.11956199999985984,
+            "applicationRemainder": 0.04060400000048503
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.1305840000002263,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004812000000129046,
+            "data": 0.07997949999980847,
+            "applicationRemainder": 0.03954150000026857
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.13141649999988658,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004895999999689593,
+            "data": 0.08008350000000064,
+            "applicationRemainder": 0.038333500000135246
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.16485400000010486,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004750500000000102,
+            "data": 0.11039599999980965,
+            "applicationRemainder": 0.03993799999989278
+          }
+        }
+      },
+      "empty": {
+        "groups_only": {
+          "medianServiceMs": 0.0543755000001056,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0039584999999533466,
+            "data": 0.02170799999976225,
+            "applicationRemainder": 0.02597850000006474
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.05977050000001327,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.003937000000178159,
+            "data": 0.025063000000045577,
+            "applicationRemainder": 0.02664549999940391
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.0522915000001376,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.00400050000007468,
+            "data": 0.019457999999985987,
+            "applicationRemainder": 0.024708500000087952
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.05204150000008667,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0040209999999660795,
+            "data": 0.019499999999879947,
+            "applicationRemainder": 0.024958500000138883
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.0548954999999296,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.003978999999844746,
+            "data": 0.021832999999787717,
+            "applicationRemainder": 0.025917500000105065
+          }
+        }
+      },
+      "empty_gap": {
+        "groups_only": {
+          "medianServiceMs": 0.05645800000024792,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004291500000135784,
+            "data": 0.0263119999999617,
+            "applicationRemainder": 0.027041499999995722
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.061625000000276486,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004354000000148517,
+            "data": 0.029791500000101223,
+            "applicationRemainder": 0.027896500000224478
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.05316699999980301,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004353999999921143,
+            "data": 0.024354499999844847,
+            "applicationRemainder": 0.026646499999515072
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.0543124999999236,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004353999999921143,
+            "data": 0.024145999999973355,
+            "applicationRemainder": 0.02685350000001563
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.05691649999994297,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004312499999969077,
+            "data": 0.026208499999938795,
+            "applicationRemainder": 0.027208999999402295
+          }
+        }
+      },
+      "next_page": {
+        "groups_only": {
+          "medianServiceMs": 0.17154150000010304,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005021500000339074,
+            "data": 0.12622899999996662,
+            "applicationRemainder": 0.04143750000048385
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.19052099999976235,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005125000000134605,
+            "data": 0.1452084999998533,
+            "applicationRemainder": 0.04329150000012305
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.14154199999984485,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005208500000208005,
+            "data": 0.09860450000019227,
+            "applicationRemainder": 0.040749499999719774
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.151750500000162,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005062500000121872,
+            "data": 0.1071875000000091,
+            "applicationRemainder": 0.041854500000226835
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.18022899999982656,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004999999999881766,
+            "data": 0.13827100000003156,
+            "applicationRemainder": 0.04104200000006131
+          }
+        }
+      },
+      "numeric_select": {
+        "groups_only": {
+          "medianServiceMs": 0.3928750000004584,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.01245800000106101,
+            "data": 0.3492079999996349,
+            "applicationRemainder": 0.04454099999929895
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.3795000000000073,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.01283300000068266,
+            "data": 0.3284169999997175,
+            "applicationRemainder": 0.05133399999976973
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.363125000000764,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.013167000000976259,
+            "data": 0.31941699999970297,
+            "applicationRemainder": 0.049251999998887186
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.37520799999947485,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.012458000000151515,
+            "data": 0.3297080000002097,
+            "applicationRemainder": 0.0488340000010794
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.40987500000028376,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.012791000000106578,
+            "data": 0.36570800000026793,
+            "applicationRemainder": 0.04587499999979627
+          }
+        }
+      },
+      "select": {
+        "groups_only": {
+          "medianServiceMs": 0.6556250000003274,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.014583000000129687,
+            "data": 0.6984170000005179,
+            "applicationRemainder": 0.05070900000100664
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.4152090000006865,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.015416999999615655,
+            "data": 0.4295830000000933,
+            "applicationRemainder": 0.052250000000640284
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.5881250000002183,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.014458000000558968,
+            "data": 0.6203749999995125,
+            "applicationRemainder": 0.050792000000910775
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.6068329999998241,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.014416999999411928,
+            "data": 0.627875000000131,
+            "applicationRemainder": 0.05046000000038475
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.6723750000001019,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.015082999999322055,
+            "data": 0.7383330000002388,
+            "applicationRemainder": 0.050416999999470136
+          }
+        }
+      },
+      "sorted": {
+        "groups_only": {
+          "medianServiceMs": 0.158625499999971,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004792000000406915,
+            "data": 0.11022899999966285,
+            "applicationRemainder": 0.03829200000063793
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.19068749999996726,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.004708499999651394,
+            "data": 0.1396669999999176,
+            "applicationRemainder": 0.04010399999992842
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.12977100000011887,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005062499999894499,
+            "data": 0.08168750000004366,
+            "applicationRemainder": 0.038604500000246844
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.1341245000003255,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0048325000000204454,
+            "data": 0.08656249999989996,
+            "applicationRemainder": 0.03822949999994307
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.16360450000001947,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0047495000001163135,
+            "data": 0.11395850000008068,
+            "applicationRemainder": 0.03952049999998053
+          }
+        }
+      },
+      "sparse": {
+        "groups_only": {
+          "medianServiceMs": 0.08708350000006249,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005624500000067201,
+            "data": 0.05087499999990541,
+            "applicationRemainder": 0.03756249999992178
+          }
+        },
+        "narrow": {
+          "medianServiceMs": 0.10406300000022384,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005833500000107961,
+            "data": 0.07014550000008057,
+            "applicationRemainder": 0.03914549999990413
+          }
+        },
+        "old_incompatible": {
+          "medianServiceMs": 0.07797949999985576,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005938000000014654,
+            "data": 0.042500499999960084,
+            "applicationRemainder": 0.03685399999994843
+          }
+        },
+        "query_only": {
+          "medianServiceMs": 0.08774950000019999,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.005749000000150772,
+            "data": 0.05270850000010796,
+            "applicationRemainder": 0.035499999999956344
+          }
+        },
+        "repaired": {
+          "medianServiceMs": 0.0994789999999739,
+          "medianServiceAndEncodingMs": null,
+          "stageMedianMs": {
+            "metadata": 0.0055410000002211746,
+            "data": 0.06420800000000781,
+            "applicationRemainder": 0.037750000000187356
+          }
+        }
+      }
+    }
+  },
+  "accepted": {
+    "accepted-wide": {
+      "cases": 32,
+      "trials": 150,
+      "timedCalls": 4800,
+      "metrics": {
+        "broad_unsorted": {
+          "candidate": {
+            "medianServiceMs": 0.1528960000000552,
+            "medianServiceAndEncodingMs": 0.158791500000234,
+            "stageMedianMs": {
+              "metadata": 0.0048749999998563,
+              "data": 0.11262499999997999,
+              "applicationRemainder": 0.03572850000023209
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.15224949999969795,
+            "medianServiceAndEncodingMs": 0.1581879999996545,
+            "stageMedianMs": {
+              "metadata": 0.0047914999997829,
+              "data": 0.11397950000014134,
+              "applicationRemainder": 0.035770500000580796
+            }
+          }
+        },
+        "default": {
+          "candidate": {
+            "medianServiceMs": 0.1515835000000152,
+            "medianServiceAndEncodingMs": 0.16329150000024129,
+            "stageMedianMs": {
+              "metadata": 0.004812500000070941,
+              "data": 0.09977100000014616,
+              "applicationRemainder": 0.04052099999989878
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.15077050000013514,
+            "medianServiceAndEncodingMs": 0.16210400000022673,
+            "stageMedianMs": {
+              "metadata": 0.004729500000166809,
+              "data": 0.099478500000032,
+              "applicationRemainder": 0.0414784999998119
+            }
+          }
+        },
+        "empty": {
+          "candidate": {
+            "medianServiceMs": 0.03783349999980601,
+            "medianServiceAndEncodingMs": 0.03829149999978654,
+            "stageMedianMs": {
+              "metadata": 0.00408400000014808,
+              "data": 0.012167000000090411,
+              "applicationRemainder": 0.023645499999702224
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.03793749999977081,
+            "medianServiceAndEncodingMs": 0.03831250000007458,
+            "stageMedianMs": {
+              "metadata": 0.004229000000350425,
+              "data": 0.012395500000138782,
+              "applicationRemainder": 0.023959000000104425
+            }
+          }
+        },
+        "empty_gap": {
+          "candidate": {
+            "medianServiceMs": 0.046062500000061846,
+            "medianServiceAndEncodingMs": 0.046333999999887965,
+            "stageMedianMs": {
+              "metadata": 0.004104500000039479,
+              "data": 0.015687500000012733,
+              "applicationRemainder": 0.025312500000381988
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.04570849999981874,
+            "medianServiceAndEncodingMs": 0.04595849999986967,
+            "stageMedianMs": {
+              "metadata": 0.0040624999999181455,
+              "data": 0.01587500000005093,
+              "applicationRemainder": 0.02508350000016435
+            }
+          }
+        },
+        "next_page": {
+          "candidate": {
+            "medianServiceMs": 0.15439549999996416,
+            "medianServiceAndEncodingMs": 0.16222949999973935,
+            "stageMedianMs": {
+              "metadata": 0.004958499999702326,
+              "data": 0.10402099999987513,
+              "applicationRemainder": 0.041562499999827196
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.1544375000000855,
+            "medianServiceAndEncodingMs": 0.16272899999989932,
+            "stageMedianMs": {
+              "metadata": 0.004978999999821099,
+              "data": 0.1048750000002201,
+              "applicationRemainder": 0.04137449999961973
+            }
+          }
+        },
+        "numeric_select": {
+          "candidate": {
+            "medianServiceMs": 0.3655420000000049,
+            "medianServiceAndEncodingMs": 0.3675010000001748,
+            "stageMedianMs": {
+              "metadata": 0.010540999999648193,
+              "data": 0.31850000000031287,
+              "applicationRemainder": 0.037333000000671746
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.36620799999991505,
+            "medianServiceAndEncodingMs": 0.3677079999997659,
+            "stageMedianMs": {
+              "metadata": 0.010667000000466942,
+              "data": 0.3142920000000231,
+              "applicationRemainder": 0.038792999999714084
+            }
+          }
+        },
+        "select": {
+          "candidate": {
+            "medianServiceMs": 0.41945899999973335,
+            "medianServiceAndEncodingMs": 0.42337599999973463,
+            "stageMedianMs": {
+              "metadata": 0.01133399999980611,
+              "data": 0.3675829999997404,
+              "applicationRemainder": 0.04050099999994927
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.6872089999997115,
+            "medianServiceAndEncodingMs": 0.6918749999999818,
+            "stageMedianMs": {
+              "metadata": 0.011541000000306667,
+              "data": 0.6386669999997139,
+              "applicationRemainder": 0.04037499999958527
+            }
+          }
+        },
+        "sorted": {
+          "candidate": {
+            "medianServiceMs": 0.1539170000003196,
+            "medianServiceAndEncodingMs": 0.16302100000029895,
+            "stageMedianMs": {
+              "metadata": 0.004458500000282584,
+              "data": 0.10108349999973143,
+              "applicationRemainder": 0.03991649999989022
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.15431250000006003,
+            "medianServiceAndEncodingMs": 0.1640629999999419,
+            "stageMedianMs": {
+              "metadata": 0.004500000000007276,
+              "data": 0.10181250000005093,
+              "applicationRemainder": 0.039603000000397515
+            }
+          }
+        },
+        "sparse": {
+          "candidate": {
+            "medianServiceMs": 0.07539650000012443,
+            "medianServiceAndEncodingMs": 0.07752149999987523,
+            "stageMedianMs": {
+              "metadata": 0.004249999999728971,
+              "data": 0.03822900000000118,
+              "applicationRemainder": 0.03016750000006141
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.07550000000014734,
+            "medianServiceAndEncodingMs": 0.07802100000026257,
+            "stageMedianMs": {
+              "metadata": 0.004083499999978812,
+              "data": 0.037958499999831474,
+              "applicationRemainder": 0.029813000000103784
+            }
+          }
+        }
+      }
+    },
+    "accepted-2": {
+      "cases": 36,
+      "trials": 150,
+      "timedCalls": 5400,
+      "metrics": {
+        "broad_unsorted": {
+          "candidate": {
+            "medianServiceMs": 0.055249999999944066,
+            "medianServiceAndEncodingMs": 0.05733349999997017,
+            "stageMedianMs": {
+              "metadata": 0.0031455000000164546,
+              "data": 0.034729499999968994,
+              "applicationRemainder": 0.01910350000002836
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.05406249999998636,
+            "medianServiceAndEncodingMs": 0.055937500000027285,
+            "stageMedianMs": {
+              "metadata": 0.0030204999999909887,
+              "data": 0.034874999999999545,
+              "applicationRemainder": 0.01764500000007274
+            }
+          }
+        },
+        "default": {
+          "candidate": {
+            "medianServiceMs": 0.056979500000011285,
+            "medianServiceAndEncodingMs": 0.062270499999954154,
+            "stageMedianMs": {
+              "metadata": 0.0033954999999536994,
+              "data": 0.03289599999999382,
+              "applicationRemainder": 0.018146000000058393
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.05689599999999473,
+            "medianServiceAndEncodingMs": 0.06216699999993125,
+            "stageMedianMs": {
+              "metadata": 0.0033119999999939864,
+              "data": 0.0330005000000142,
+              "applicationRemainder": 0.019063000000130614
+            }
+          }
+        },
+        "empty": {
+          "candidate": {
+            "medianServiceMs": 0.01764550000007148,
+            "medianServiceAndEncodingMs": 0.017811999999992167,
+            "stageMedianMs": {
+              "metadata": 0.0026669999999171523,
+              "data": 0.007104499999968539,
+              "applicationRemainder": 0.00897999999995136
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.018645999999989726,
+            "medianServiceAndEncodingMs": 0.018854499999974905,
+            "stageMedianMs": {
+              "metadata": 0.0027704999999969004,
+              "data": 0.006562500000029559,
+              "applicationRemainder": 0.009541499999841108
+            }
+          }
+        },
+        "empty_gap": {
+          "candidate": {
+            "medianServiceMs": 0.02258349999993925,
+            "medianServiceAndEncodingMs": 0.022749999999973625,
+            "stageMedianMs": {
+              "metadata": 0.0027919999999994616,
+              "data": 0.010332999999945969,
+              "applicationRemainder": 0.00881249999991951
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.0231040000000462,
+            "medianServiceAndEncodingMs": 0.02329100000008566,
+            "stageMedianMs": {
+              "metadata": 0.0027710000000524815,
+              "data": 0.010312000000055832,
+              "applicationRemainder": 0.008854000000155793
+            }
+          }
+        },
+        "next_page": {
+          "candidate": {
+            "medianServiceMs": 0.06566649999996343,
+            "medianServiceAndEncodingMs": 0.06814649999995481,
+            "stageMedianMs": {
+              "metadata": 0.003229000000033011,
+              "data": 0.04162500000001046,
+              "applicationRemainder": 0.020791999999971722
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.0660630000000424,
+            "medianServiceAndEncodingMs": 0.06852099999997563,
+            "stageMedianMs": {
+              "metadata": 0.0030420000000503933,
+              "data": 0.04137550000007195,
+              "applicationRemainder": 0.020542500000090058
+            }
+          }
+        },
+        "numeric_select": {
+          "candidate": {
+            "medianServiceMs": 0.12283349999995608,
+            "medianServiceAndEncodingMs": 0.12566700000013498,
+            "stageMedianMs": {
+              "metadata": 0.003917000000001281,
+              "data": 0.09752049999997325,
+              "applicationRemainder": 0.020166500000016185
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.12235450000002857,
+            "medianServiceAndEncodingMs": 0.12481299999996054,
+            "stageMedianMs": {
+              "metadata": 0.003915999999946962,
+              "data": 0.09887500000007776,
+              "applicationRemainder": 0.020520499999975073
+            }
+          }
+        },
+        "select": {
+          "candidate": {
+            "medianServiceMs": 0.15760399999999208,
+            "medianServiceAndEncodingMs": 0.1598329999999919,
+            "stageMedianMs": {
+              "metadata": 0.004187500000114142,
+              "data": 0.13970849999992652,
+              "applicationRemainder": 0.021292500000072323
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.188020999999992,
+            "medianServiceAndEncodingMs": 0.1904589999999189,
+            "stageMedianMs": {
+              "metadata": 0.004083999999863863,
+              "data": 0.17285400000008622,
+              "applicationRemainder": 0.020625500000051034
+            }
+          }
+        },
+        "sorted": {
+          "candidate": {
+            "medianServiceMs": 0.06193800000005467,
+            "medianServiceAndEncodingMs": 0.06472899999999981,
+            "stageMedianMs": {
+              "metadata": 0.0032084999999710817,
+              "data": 0.038583499999958804,
+              "applicationRemainder": 0.02052050000008876
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.06295849999997927,
+            "medianServiceAndEncodingMs": 0.06531250000006139,
+            "stageMedianMs": {
+              "metadata": 0.0032504999999218853,
+              "data": 0.03912500000001273,
+              "applicationRemainder": 0.020354999999995016
+            }
+          }
+        },
+        "sparse": {
+          "candidate": {
+            "medianServiceMs": 0.03289549999993824,
+            "medianServiceAndEncodingMs": 0.033729000000050746,
+            "stageMedianMs": {
+              "metadata": 0.00285399999989977,
+              "data": 0.01687499999997044,
+              "applicationRemainder": 0.011791499999958432
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.03220850000002429,
+            "medianServiceAndEncodingMs": 0.03383350000001428,
+            "stageMedianMs": {
+              "metadata": 0.002812500000061391,
+              "data": 0.017041500000004817,
+              "applicationRemainder": 0.012062500000013188
+            }
+          }
+        }
+      }
+    },
+    "accepted-10": {
+      "cases": 180,
+      "trials": 30,
+      "timedCalls": 5400,
+      "metrics": {
+        "broad_unsorted": {
+          "candidate": {
+            "medianServiceMs": 0.06427099999996244,
+            "medianServiceAndEncodingMs": 0.0662294999998494,
+            "stageMedianMs": {
+              "metadata": 0.004666499999984808,
+              "data": 0.040958500000101594,
+              "applicationRemainder": 0.01797899999985475
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.06281250000006366,
+            "medianServiceAndEncodingMs": 0.06541700000013861,
+            "stageMedianMs": {
+              "metadata": 0.004666499999757434,
+              "data": 0.040583500000138883,
+              "applicationRemainder": 0.017895500000236098
+            }
+          }
+        },
+        "default": {
+          "candidate": {
+            "medianServiceMs": 0.060854500000118605,
+            "medianServiceAndEncodingMs": 0.06408349999981056,
+            "stageMedianMs": {
+              "metadata": 0.004583500000080676,
+              "data": 0.037958499999831474,
+              "applicationRemainder": 0.018603499999699125
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.06083349999994425,
+            "medianServiceAndEncodingMs": 0.06414549999999508,
+            "stageMedianMs": {
+              "metadata": 0.004603999999972075,
+              "data": 0.037958000000116954,
+              "applicationRemainder": 0.019811999999774343
+            }
+          }
+        },
+        "empty": {
+          "candidate": {
+            "medianServiceMs": 0.024062000000185435,
+            "medianServiceAndEncodingMs": 0.024207999999930507,
+            "stageMedianMs": {
+              "metadata": 0.004229000000009364,
+              "data": 0.012250499999936437,
+              "applicationRemainder": 0.008770499999741332
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.024166500000092128,
+            "medianServiceAndEncodingMs": 0.024374999999849933,
+            "stageMedianMs": {
+              "metadata": 0.004187500000398359,
+              "data": 0.012312500000007276,
+              "applicationRemainder": 0.008625000000051841
+            }
+          }
+        },
+        "empty_gap": {
+          "candidate": {
+            "medianServiceMs": 0.03181249999988722,
+            "medianServiceAndEncodingMs": 0.031958499999973355,
+            "stageMedianMs": {
+              "metadata": 0.004500000000007276,
+              "data": 0.016791500000067572,
+              "applicationRemainder": 0.009561499999676926
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.032104499999832115,
+            "medianServiceAndEncodingMs": 0.03231299999970361,
+            "stageMedianMs": {
+              "metadata": 0.004542500000184191,
+              "data": 0.016874999999913598,
+              "applicationRemainder": 0.010187500000029104
+            }
+          }
+        },
+        "next_page": {
+          "candidate": {
+            "medianServiceMs": 0.0799375000000282,
+            "medianServiceAndEncodingMs": 0.08214550000002419,
+            "stageMedianMs": {
+              "metadata": 0.004645500000037828,
+              "data": 0.053145499999914136,
+              "applicationRemainder": 0.021186999999827094
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.07881249999991269,
+            "medianServiceAndEncodingMs": 0.08072899999967831,
+            "stageMedianMs": {
+              "metadata": 0.004812499999843567,
+              "data": 0.05308300000001509,
+              "applicationRemainder": 0.021603999999797452
+            }
+          }
+        },
+        "numeric_select": {
+          "candidate": {
+            "medianServiceMs": 0.13495799999998326,
+            "medianServiceAndEncodingMs": 0.13697849999994105,
+            "stageMedianMs": {
+              "metadata": 0.005354500000066764,
+              "data": 0.1087080000000924,
+              "applicationRemainder": 0.019084000000134438
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.1332284999998592,
+            "medianServiceAndEncodingMs": 0.135291000000052,
+            "stageMedianMs": {
+              "metadata": 0.005583499999829655,
+              "data": 0.10920800000008057,
+              "applicationRemainder": 0.018625499999757267
+            }
+          }
+        },
+        "select": {
+          "candidate": {
+            "medianServiceMs": 0.17562500000008185,
+            "medianServiceAndEncodingMs": 0.17756200000007993,
+            "stageMedianMs": {
+              "metadata": 0.005770999999867854,
+              "data": 0.1513750000001437,
+              "applicationRemainder": 0.019541499999832013
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.20789599999977781,
+            "medianServiceAndEncodingMs": 0.20964599999990696,
+            "stageMedianMs": {
+              "metadata": 0.005729500000143162,
+              "data": 0.18587500000001,
+              "applicationRemainder": 0.019000000000119144
+            }
+          }
+        },
+        "sorted": {
+          "candidate": {
+            "medianServiceMs": 0.07256249999977626,
+            "medianServiceAndEncodingMs": 0.07537449999972523,
+            "stageMedianMs": {
+              "metadata": 0.00454200000012861,
+              "data": 0.04827049999994415,
+              "applicationRemainder": 0.020396499999947082
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.07337500000016917,
+            "medianServiceAndEncodingMs": 0.0764995000001818,
+            "stageMedianMs": {
+              "metadata": 0.0045004999997217965,
+              "data": 0.04800000000000182,
+              "applicationRemainder": 0.020354500000053122
+            }
+          }
+        },
+        "sparse": {
+          "candidate": {
+            "medianServiceMs": 0.04110399999990477,
+            "medianServiceAndEncodingMs": 0.043229000000224005,
+            "stageMedianMs": {
+              "metadata": 0.004292000000191365,
+              "data": 0.024708000000146058,
+              "applicationRemainder": 0.013041500000099404
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.04179149999993115,
+            "medianServiceAndEncodingMs": 0.04320849999987786,
+            "stageMedianMs": {
+              "metadata": 0.004416499999820189,
+              "data": 0.02491650000001755,
+              "applicationRemainder": 0.013312500000211003
+            }
+          }
+        }
+      }
+    },
+    "accepted-30": {
+      "cases": 540,
+      "trials": 30,
+      "timedCalls": 16200,
+      "metrics": {
+        "broad_unsorted": {
+          "candidate": {
+            "medianServiceMs": 0.06589549999989686,
+            "medianServiceAndEncodingMs": 0.06931200000008175,
+            "stageMedianMs": {
+              "metadata": 0.005228500000612257,
+              "data": 0.042312500000207365,
+              "applicationRemainder": 0.018541500000083033
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.06587500000023283,
+            "medianServiceAndEncodingMs": 0.0680835000002844,
+            "stageMedianMs": {
+              "metadata": 0.005250000000160071,
+              "data": 0.04383299999972223,
+              "applicationRemainder": 0.01860450000003766
+            }
+          }
+        },
+        "default": {
+          "candidate": {
+            "medianServiceMs": 0.06120850000024802,
+            "medianServiceAndEncodingMs": 0.06420800000023519,
+            "stageMedianMs": {
+              "metadata": 0.005146000000422646,
+              "data": 0.03943749999962165,
+              "applicationRemainder": 0.01652100000092105
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.061146000000462664,
+            "medianServiceAndEncodingMs": 0.06416699999999764,
+            "stageMedianMs": {
+              "metadata": 0.005145999999513151,
+              "data": 0.0396045000002232,
+              "applicationRemainder": 0.016603500000201166
+            }
+          }
+        },
+        "empty": {
+          "candidate": {
+            "medianServiceMs": 0.027250499999809108,
+            "medianServiceAndEncodingMs": 0.027375499999379826,
+            "stageMedianMs": {
+              "metadata": 0.0047505000002274755,
+              "data": 0.01272900000003574,
+              "applicationRemainder": 0.009375000000318323
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.02695850000009159,
+            "medianServiceAndEncodingMs": 0.02710400000023583,
+            "stageMedianMs": {
+              "metadata": 0.004708499999651394,
+              "data": 0.012812500000563887,
+              "applicationRemainder": 0.009187500000734872
+            }
+          }
+        },
+        "empty_gap": {
+          "candidate": {
+            "medianServiceMs": 0.03327100000024075,
+            "medianServiceAndEncodingMs": 0.033479499999884865,
+            "stageMedianMs": {
+              "metadata": 0.004979500000899861,
+              "data": 0.017479499999808468,
+              "applicationRemainder": 0.011144999999942229
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.03304150000030859,
+            "medianServiceAndEncodingMs": 0.03322900000057416,
+            "stageMedianMs": {
+              "metadata": 0.004979500000445114,
+              "data": 0.01752100000021528,
+              "applicationRemainder": 0.010729500000707048
+            }
+          }
+        },
+        "next_page": {
+          "candidate": {
+            "medianServiceMs": 0.07943699999987075,
+            "medianServiceAndEncodingMs": 0.08147949999965931,
+            "stageMedianMs": {
+              "metadata": 0.005249999999932697,
+              "data": 0.053249999999934516,
+              "applicationRemainder": 0.0216670000004342
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.07825049999973999,
+            "medianServiceAndEncodingMs": 0.08020799999985684,
+            "stageMedianMs": {
+              "metadata": 0.005229500000496046,
+              "data": 0.05329200000005585,
+              "applicationRemainder": 0.02135400000042864
+            }
+          }
+        },
+        "numeric_select": {
+          "candidate": {
+            "medianServiceMs": 0.13677099999995335,
+            "medianServiceAndEncodingMs": 0.13935349999928803,
+            "stageMedianMs": {
+              "metadata": 0.005978500000310305,
+              "data": 0.11187499999959982,
+              "applicationRemainder": 0.018874500000492844
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.13752050000039162,
+            "medianServiceAndEncodingMs": 0.13912450000043464,
+            "stageMedianMs": {
+              "metadata": 0.006062500000098225,
+              "data": 0.1106669999994665,
+              "applicationRemainder": 0.019250499999998283
+            }
+          }
+        },
+        "select": {
+          "candidate": {
+            "medianServiceMs": 0.17766649999975925,
+            "medianServiceAndEncodingMs": 0.1804165000003195,
+            "stageMedianMs": {
+              "metadata": 0.006375000000389264,
+              "data": 0.15031200000021272,
+              "applicationRemainder": 0.019311999999899854
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.21387500000037107,
+            "medianServiceAndEncodingMs": 0.21656250000023647,
+            "stageMedianMs": {
+              "metadata": 0.006395499999143794,
+              "data": 0.18677049999996598,
+              "applicationRemainder": 0.019416499999806547
+            }
+          }
+        },
+        "sorted": {
+          "candidate": {
+            "medianServiceMs": 0.07389550000016243,
+            "medianServiceAndEncodingMs": 0.07681249999950523,
+            "stageMedianMs": {
+              "metadata": 0.005145499999798631,
+              "data": 0.049333500000102504,
+              "applicationRemainder": 0.01956149999932677
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.0736455000001115,
+            "medianServiceAndEncodingMs": 0.07593750000023647,
+            "stageMedianMs": {
+              "metadata": 0.005166500000086671,
+              "data": 0.049333499999647756,
+              "applicationRemainder": 0.019583000000238826
+            }
+          }
+        },
+        "sparse": {
+          "candidate": {
+            "medianServiceMs": 0.043687499999577994,
+            "medianServiceAndEncodingMs": 0.04418699999996534,
+            "stageMedianMs": {
+              "metadata": 0.0049579999999878055,
+              "data": 0.025749999999788997,
+              "applicationRemainder": 0.013980000000174186
+            }
+          },
+          "repaired": {
+            "medianServiceMs": 0.043457999999645835,
+            "medianServiceAndEncodingMs": 0.04475000000002183,
+            "stageMedianMs": {
+              "metadata": 0.004938000000038301,
+              "data": 0.025562499999978172,
+              "applicationRemainder": 0.0136875000002874
+            }
+          }
+        }
+      }
+    }
+  },
+  "validation": {
+    "tests": 17,
+    "assertions": 355,
+    "experimentalTypecheck": "passed",
+    "payloadAssembliesBefore": [
+      114,
+      152
+    ],
+    "payloadAssembliesAfter": [
+      51,
+      51
+    ],
+    "maxPhysicalSelectSqlBytes": 90678,
+    "maxBoundParameters": 92
+  },
+  "sqlWork": [
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "default",
+      "vmSteps": 3935,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "default",
+      "vmSteps": 3935,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "sorted",
+      "vmSteps": 4455,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "sorted",
+      "vmSteps": 4455,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "next_page",
+      "vmSteps": 4635,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "next_page",
+      "vmSteps": 4635,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "sparse",
+      "vmSteps": 937,
+      "rows": 10,
+      "payloadAssemblies": 10
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "sparse",
+      "vmSteps": 937,
+      "rows": 10,
+      "payloadAssemblies": 10
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "empty",
+      "vmSteps": 72,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "empty",
+      "vmSteps": 72,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "broad_unsorted",
+      "vmSteps": 4184,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "broad_unsorted",
+      "vmSteps": 4184,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_regular",
+      "mode": "empty_gap",
+      "vmSteps": 65,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_regular",
+      "mode": "empty_gap",
+      "vmSteps": 65,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "default",
+      "vmSteps": 3935,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "default",
+      "vmSteps": 3935,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "sorted",
+      "vmSteps": 4455,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "sorted",
+      "vmSteps": 4455,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "next_page",
+      "vmSteps": 4635,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "next_page",
+      "vmSteps": 4635,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "sparse",
+      "vmSteps": 937,
+      "rows": 10,
+      "payloadAssemblies": 10
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "sparse",
+      "vmSteps": 937,
+      "rows": 10,
+      "payloadAssemblies": 10
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "empty",
+      "vmSteps": 72,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "empty",
+      "vmSteps": 72,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "broad_unsorted",
+      "vmSteps": 4184,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "broad_unsorted",
+      "vmSteps": 4184,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_rich",
+      "mode": "empty_gap",
+      "vmSteps": 65,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_rich",
+      "mode": "empty_gap",
+      "vmSteps": 65,
+      "rows": 0,
+      "payloadAssemblies": 0
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_scale_00",
+      "mode": "select",
+      "vmSteps": 44197,
+      "rows": 51,
+      "payloadAssemblies": 114
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_scale_00",
+      "mode": "select",
+      "vmSteps": 40328,
+      "rows": 51,
+      "payloadAssemblies": 51
+    },
+    {
+      "variant": "repaired",
+      "fixture": "ee787r_scale_00",
+      "mode": "numeric_select",
+      "vmSteps": 20056,
+      "rows": 50,
+      "payloadAssemblies": 50
+    },
+    {
+      "variant": "candidate",
+      "fixture": "ee787r_scale_00",
+      "mode": "numeric_select",
+      "vmSteps": 20056,
+      "rows": 50,
+      "payloadAssemblies": 50
+    }
+  ],
+  "limits": [
+    "Elapsed local adapter boundaries are not exclusive CPU attribution.",
+    "No cloud D1 billing or Workers CPU measured.",
+    "Unfiltered leading-select sorts only; filtered and other-leading-key paths unchanged.",
+    "Selection still scans/sorts candidates and adds at most 51 indexed payload lookups."
+  ],
+  "rejectedCandidates": [
+    "Application fragment assembly mostly moved cost to the application.",
+    "Direct WHERE aliases did not give a reliable improvement.",
+    "JSONB composition and printf assembly were slower locally.",
+    "Deferring full rows and applying point lookups to all queries regressed indexed or selective queries."
+  ],
+  "method": "Shared connection, identical immutable data, workload warm-up, rotated execution order. Separate total/UTF-8 encoding and instrumented adapter timing. Prepared-query VM steps exclude initial compilation."
+}

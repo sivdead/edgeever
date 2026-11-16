@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-11-17",
+  "officialSources": {
+    "D1Limits": "https://developers.cloudflare.com/d1/platform/limits/",
+    "D1Pricing": "https://developers.cloudflare.com/d1/platform/pricing/",
+    "WorkersLimits": "https://developers.cloudflare.com/workers/platform/limits/",
+    "R2Pricing": "https://developers.cloudflare.com/r2/pricing/"
+  },
+  "freePlan": {
+    "D1SingleDatabase": "500 MB",
+    "D1AccountStorage": "5 GB",
+    "D1AccountDatabases": 10,
+    "D1RowsReadPerDay": 5000000,
+    "D1RowsWrittenPerDay": 100000,
+    "WorkerRequestsPerDay": 100000,
+    "WorkerCpuMsPerHttpRequest": 10,
+    "D1LikeGlobPatternBytes": 50,
+    "R2StandardStorage": "10 GB-month/month",
+    "R2ClassAPerMonth": 1000000,
+    "R2ClassBPerMonth": 10000000
+  },
+  "existingProductContract": {
+    "recordsPerLogicalTable": 2000,
+    "fieldsPerLogicalTable": 40
+  },
+  "spaceArithmetic": [
+    {
+      "dataset": "30tables-1000x10",
+      "testedRecords": 30000,
+      "completeExperimentDatabaseBytes": 160632832,
+      "candidateObjectsBytes": 53338112,
+      "exampleBudgetBytes": 500000000,
+      "entireDatabaseLinearRecordEstimate": 93380,
+      "candidateOnlyLinearRecordEstimate": 281224
+    },
+    {
+      "dataset": "2tables-1950x38-rich",
+      "testedRecords": 3900,
+      "completeExperimentDatabaseBytes": 174166016,
+      "candidateObjectsBytes": 46243840,
+      "exampleBudgetBytes": 500000000,
+      "entireDatabaseLinearRecordEstimate": 11196,
+      "candidateOnlyLinearRecordEstimate": 42167
+    }
+  ],
+  "arithmeticBoundary": "Linear illustration using 500,000,000 bytes; not a Cloudflare acceptance result, capacity guarantee or exact interpretation of provider MB accounting. Complete experiment files include legacy migration-input documents and baseline objects; candidate-only objects include initial record history, indexes and FTS but exclude those legacy/baseline objects. Further edits/history, other notes, extra indexes and attachment metadata reduce capacity. No extrapolation load was seeded.",
+  "historicalPhysicalEvidence": {
+    "physical-record-baseline.json": {
+      "originalEvidence": "2026-11-11-record-physical/summary.json",
+      "sha256": "29069371314b9be05ddc82c2e40f491bbf45cdb0e5f83fc931fad36e1f9e2a7c"
+    },
+    "physical-query-review.json": {
+      "originalEvidence": "2026-11-12-physical-review/summary.json",
+      "sha256": "aef9409ae2690e89ab53402d46d14b7057942db297a592f86ae102f828ab5a9b"
+    },
+    "physical-query-attribution.json": {
+      "originalEvidence": "2026-11-12-physical-attribution/summary.json",
+      "sha256": "e74cb4b69d6d87be9b3e7e541b819a9634b8d2ff67fde95919c64b2a0506732c"
+    }
+  },
+  "physicalComparisonBoundary": "Historical same-run JSON partial-index/physical comparisons, not a head-to-head benchmark of the current shared implementation. Storage-only update probes exclude complete authorization/search/history transactions."
+}

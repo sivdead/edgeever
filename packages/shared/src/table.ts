@@ -354,11 +354,13 @@ function readTableDocumentJson(json: string | null, includeRecords: boolean): Ta
       if (!validateCells) continue;
       const rawCells = isRecord(item.cells) ? item.cells : {};
       if (!records) {
-        for (const field of fields) coerceTableCell(field, rawCells[field.id]);
+        for (const field of fields) coerceTableCell(field, Object.hasOwn(rawCells, field.id) ? rawCells[field.id] : undefined);
         continue;
       }
-      const cells: Record<string, TableCellValue> = {};
-      for (const field of fields) cells[field.id] = coerceTableCell(field, rawCells[field.id]);
+      const cells: Record<string, TableCellValue> = Object.fromEntries(fields.map((field) => {
+        const raw = Object.hasOwn(rawCells, field.id) ? rawCells[field.id] : undefined;
+        return [field.id, value.cellEncoding === "nullable-v1" && raw === null ? null : coerceTableCell(field, raw)];
+      }));
       records.push({ id: item.id, cells });
     }
     const metadata = { fields, recordCount: value.records.length };
@@ -373,6 +375,7 @@ function readTableDocumentJson(json: string | null, includeRecords: boolean): Ta
   }
 }
 
+export { readTableDocumentJson as parseTableDocumentJson };
 export const parseTableDocument = (markdown: string | null | undefined) => readTableDocumentJson(decodeTableDocumentMarker(markdown), true);
 export const parseTableDocumentMetadata = (markdown: string | null | undefined) => readTableDocumentJson(decodeTableDocumentMarker(markdown), false);
 
@@ -465,6 +468,18 @@ const cellSortText = (field: TableField, value: TableCellValue) => {
   return String(value);
 };
 
+/** Unicode scalar order, matching SQLite UTF-8 BINARY rather than host locale. */
+export const compareTableText = (left: string, right: string) => {
+  let a = 0, b = 0;
+  while (a < left.length && b < right.length) {
+    const x = left.codePointAt(a)!, y = right.codePointAt(b)!;
+    if (x !== y) return x < y ? -1 : 1;
+    a += x > 0xffff ? 2 : 1;
+    b += y > 0xffff ? 2 : 1;
+  }
+  return a < left.length ? 1 : b < right.length ? -1 : 0;
+};
+
 const matchesFilter = (field: TableField, value: TableCellValue, filter: TableFilter) => {
   if (field.type === "attachment") {
     const names = attachmentNames(value);
@@ -489,6 +504,15 @@ const matchesFilter = (field: TableField, value: TableCellValue, filter: TableFi
   return String(value ?? "").toLocaleLowerCase().includes((filter.value ?? "").trim().toLocaleLowerCase());
 };
 
+export const createTableSortKey = (field: TableField, legacy = false) => {
+  const options = !legacy && field.type === "select"
+    ? new Map((field.options ?? []).map((option, index) => [option, index]))
+    : undefined;
+  return (value: TableCellValue) => options
+    ? typeof value === "string" ? options.get(value) ?? null : null
+    : cellSortText(field, value);
+};
+
 export const applyTableView = (
   document: TableDocument, records = document.records, view = getTableViews(document)[0]!, now = new Date(),
 ) => {
@@ -506,23 +530,17 @@ export const applyTableView = (
   const sorts = view.sorts.flatMap((rule) => {
     const field = fields.get(rule.fieldId);
     if (!field) return [];
-    const options = !rule.legacy && field.type === "select"
-      ? new Map((field.options ?? []).map((option, index) => [option, index]))
-      : undefined;
-    return [{ field, direction: rule.direction === "desc" ? -1 : 1, options }];
+    return [{ field, direction: rule.direction === "desc" ? -1 : 1, key: createTableSortKey(field, rule.legacy === true) }];
   });
   if (!sorts.length) return filtered;
   return filtered.sort((left, right) => {
-    for (const { field, direction, options } of sorts) {
-      const key = (value: TableCellValue) => options
-        ? typeof value === "string" ? options.get(value) ?? null : null
-        : cellSortText(field, value);
+    for (const { field, direction, key } of sorts) {
       const a = key(left.cells[field.id] ?? null);
       const b = key(right.cells[field.id] ?? null);
       if (a === null && b === null) continue;
       if (a === null) return 1;
       if (b === null) return -1;
-      const compare = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b));
+      const compare = typeof a === "number" && typeof b === "number" ? a - b : compareTableText(String(a), String(b));
       if (compare) return compare * direction;
     }
     return 0;
