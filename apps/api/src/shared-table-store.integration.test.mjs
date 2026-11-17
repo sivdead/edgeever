@@ -25,7 +25,7 @@ test('legacy/named views, attachments, nulls and unusual field IDs survive share
   document.records[0].cells.files=[{resourceId:'resource-a',filename:'附件.pdf',mimeType:'application/pdf',byteSize:7}];
   const e=await environment(document);try{
     expect(e.document.records[0].cells.files).toEqual(document.records[0].cells.files);
-    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
     expect(await pages(e)).toEqual(e.document.records);
     const legacy={...e.document,schemaVersion:1,view:{filters:[],sort:null}};delete legacy.views;
     const second=await createMemoRecord(e.db,'ws_default',{notebookId:'nb_inbox',contentMarkdown:serializeTableDocument(legacy)},actor,'test');
@@ -67,7 +67,7 @@ test('append/delete and historical restore preserve ordering and metadata',async
     await e.store.apply('ws_default',e.memo.id,{expectedRevision:1,puts:[{id:'new',cells:{name:'new',amount:77,status:'A',files:[]}}],deletes:['r2']});
     expect((await e.store.snapshot('ws_default',e.memo.id)).records.map(r=>r.id)).toEqual(['r0','r1','r3','r4','r5','r6','r7','new']);
     await e.store.restore('ws_default',e.memo.id,1,2);
-    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
     expect((await e.store.snapshot('ws_default',e.memo.id,2)).records.at(-1).id).toBe('new');
   }finally{e.close();}
 });
@@ -77,7 +77,7 @@ test('transaction failure rolls back records, head, history and full-text projec
     e.sql.exec("CREATE TRIGGER reject_history BEFORE INSERT ON ee_table_versions WHEN NEW.revision=2 BEGIN SELECT RAISE(ABORT,'injected failure'); END");
     await expect(e.store.apply('ws_default',e.memo.id,{expectedRevision:1,puts:[{id:'r0',cells:{...e.document.records[0].cells,name:'partial'}}]})).rejects.toThrow('injected failure');
     expect((await e.store.head('ws_default',e.memo.id)).revision).toBe(1);
-    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
     expect(await e.store.search('ws_default',e.memo.id,'partial')).toEqual([]);
   }finally{e.close();}
 });
@@ -90,7 +90,7 @@ test('type preflight rejects bad values; confirmation cannot bypass conversion f
     expect(preflight.failures.map(r=>r.recordId)).toEqual(['r1']);
     expect(preflight.confirmations.map(r=>r.recordId)).toEqual(['r0']);
     await expect(types.start('ws_default',e.memo.id,preflight.id,true)).rejects.toMatchObject({status:409});
-    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
   }finally{e.close();}
 });
 
@@ -122,9 +122,9 @@ test('cross-type history reads and restoration preserve each revision schema and
     await types.publish('ws_default',e.memo.id,job.id);
     const current=await e.store.snapshot('ws_default',e.memo.id);
     expect(current.fields[0].type).toBe('number');expect(current.records[0].cells.name).toBe(123);
-    expect(await e.store.snapshot('ws_default',e.memo.id,1)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id,1)).toEqual({...e.document,cellEncoding:'nullable-v1'});
     await e.store.restore('ws_default',e.memo.id,1,2);
-    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+    expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
     expect(await e.store.snapshot('ws_default',e.memo.id,2)).toEqual(current);
     expect(e.sql.query('SELECT count(*) AS n FROM ee_table_type_values').get().n).toBe(0);
   }finally{e.close();}
@@ -194,7 +194,7 @@ test('existing ZIP v2 restores current data, cross-type histories and attachment
   await e.store.apply('ws_default',e.memo.id,{expectedRevision:2,puts:[{id:'r2',cells:{...snapshots[1].records[2].cells,name:99}},{id:'r3',cells:{...snapshots[1].records[3].cells,status:null}}]});
   snapshots.push(await e.store.snapshot('ws_default',e.memo.id));
   const original=await getMemoDetail(e.db,'ws_default',e.memo.id),bytes=Uint8Array.from([1,2,3,4,5,6,7]);
-  const materialize=async(document,revision)=>{const contentMarkdown=serializeSharedSnapshot(document),contentJson=markdownToDoc(contentMarkdown);return {...original,revision,contentMarkdown,contentJson,contentText:docToText(contentJson),contentHash:await sha256(contentMarkdown)};};
+  const materialize=async(document,revision)=>{const contentMarkdown=serializeTableDocument(parseTableDocument(serializeSharedSnapshot(document))),contentJson=markdownToDoc(contentMarkdown);return {...original,revision,contentMarkdown,contentJson,contentText:docToText(contentJson),contentHash:await sha256(contentMarkdown)};};
   const current=await materialize(snapshots[2],3),revisions=[];
   for(let i=0;i<2;i++){const memo=await materialize(snapshots[i],i+1);revisions.push({id:'history-'+i,memoId:e.memo.id,revision:i+1,title:memo.title,tags:memo.tags,contentJson:memo.contentJson,contentMarkdown:memo.contentMarkdown,contentText:memo.contentText,contentHash:memo.contentHash,createdBy:'test',createdAt:memo.createdAt});}
   const resource={id:'resource-a',memoId:e.memo.id,originalMemoId:null,kind:'attachment',mimeType:'application/pdf',filename:'附件.pdf',byteSize:bytes.length,sha256:await sha256(bytes),width:null,height:null,createdAt:current.createdAt,updatedAt:current.updatedAt,url:'/api/v1/resources/resource-a/blob'};
@@ -208,7 +208,8 @@ test('existing ZIP v2 restores current data, cross-type histories and attachment
   },createResourceRestoreSink:async()=>({write:async chunk=>chunks.push(chunk),close:async()=>{},abort:async()=>{}})});
   for(let revision=1;revision<=3;revision++){
    const restored=await target.store.snapshot('ws_default',target.memo.id,revision);
-   expect(restored).toEqual(snapshots[revision-1]);expect(restored.records[0].cells.files).toEqual(d.records[0].cells.files);
+   expect(restored).toEqual({...snapshots[revision-1],cellEncoding:'nullable-v1'});expect(restored.records[0].cells.files).toEqual(d.records[0].cells.files);
+   expect(parseTableDocument(serializeTableDocument(restored))).toEqual(restored);
   }
   expect(new Uint8Array(await new Blob(chunks).arrayBuffer())).toEqual(bytes);
  }finally{if(!sourceClosed)e.close();target.close();}

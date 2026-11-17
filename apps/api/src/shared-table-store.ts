@@ -11,9 +11,9 @@ export type StoredSharedRecord={record_id:string;position:number;cells_json:stri
 export const tableConflict=()=>new AppError('revision_conflict','The table changed; retain the draft and refresh',409);
 const bad=()=>new AppError('bad_request','Invalid table records or metadata',400);
 export const tableLocked=()=>new AppError('table_migration_in_progress','This table is being converted',409);
+const withSharedCellEncoding=(document:TableDocument):TableDocument=>({...document,cellEncoding:'nullable-v1'});
 export function serializeSharedSnapshot(document:TableDocument){
- const encoded={...document,cellEncoding:'nullable-v1'};
- return serializeTableDocument(encoded);
+ return serializeTableDocument(withSharedCellEncoding(document));
 }
 export function tableHeader(document:TableDocument):TableDocument {
  const h=parseTableDocumentJson(JSON.stringify({...document,records:[]}),true);
@@ -117,7 +117,10 @@ export class SharedTableStore {
   const plan=this.initialPlan(workspace,id,prepareSnapshot(document));
   await this.initializeBatch(workspace,id,plan.statements);return headResult(plan.head);
  }
- async query(workspace:string,id:string,input:unknown){return JSON.parse(await new SharedTableQuery(this.db,workspace).query(workspace,id,input));}
+ async query(workspace:string,id:string,input:unknown){
+  const page=JSON.parse(await new SharedTableQuery(this.db,workspace).query(workspace,id,input));
+  page.header=withSharedCellEncoding(page.header);return page;
+ }
  async apply(workspace:string,id:string,input:{expectedRevision:number;puts?:TableRecord[];deletes?:string[];header?:TableDocument}){
   const h=await this.head(workspace,id);if(h.revision!==input.expectedRevision)throw tableConflict();if(h.lock_job_id)throw tableLocked();
   const old=JSON.parse(h.header_json) as TableDocument,header=input.header?tableHeader(input.header):old;
@@ -153,6 +156,19 @@ export class SharedTableStore {
   await this.batch(h,[...statements,...plan.statements,...this.commitStatements(h,header,count,max,plan.next)]);
   return this.committedHead(h,header,count,max,plan.next);
  }
+ private snapshotResult(commit:Pick<SharedHead,'revision'|'header_json'|'row_count'>,rows:StoredSharedRecord[]){
+  const visible=rows.slice(0,50);
+  return {revision:commit.revision,header:withSharedCellEncoding(JSON.parse(commit.header_json)),rowCount:commit.row_count,
+   records:visible.map(r=>({id:r.record_id,cells:JSON.parse(r.cells_json)})),next:rows.length>50?visible.at(-1)!.position:null};
+ }
+ private async currentSnapshotPage(h:SharedHead,after=0){
+  const rows=(await this.sql`SELECT hex(record_id) AS record_id,position,cells_json FROM ee_table_records
+   WHERE workspace_id=${h.workspace_id} AND table_id=${h.table_id} AND position>${after} AND position<=${h.max_position}
+   ORDER BY position LIMIT 51`.all<StoredSharedRecord>()).results.map(readStoredRecord);
+  if((await this.head(h.workspace_id,h.table_id)).revision!==h.revision)throw tableConflict();
+  return this.snapshotResult(h,rows);
+ }
+ /** Explicit revisions use immutable history, even if the revision is currently latest. */
  async snapshotPage(workspace:string,id:string,revision:number,after=0){
   await this.head(workspace,id);
   const commit=await this.sql`SELECT * FROM ee_table_commits WHERE workspace_id=${workspace} AND table_id=${id} AND revision=${revision}`
@@ -162,14 +178,13 @@ export class SharedTableStore {
    AND v.revision=(SELECT max(latest.revision) FROM ee_table_versions latest
     WHERE latest.workspace_id=v.workspace_id AND latest.table_id=v.table_id AND latest.record_id=v.record_id AND latest.revision<=${revision})
    ORDER BY v.position LIMIT 51`.all<StoredSharedRecord>()).results.map(readStoredRecord);
-  const visible=rows.slice(0,50);
-  return {revision,header:JSON.parse(commit.header_json) as TableDocument,rowCount:commit.row_count,
-   records:visible.map(r=>({id:r.record_id,cells:JSON.parse(r.cells_json)})),next:rows.length>50?visible.at(-1)!.position:null};
+  return this.snapshotResult(commit,rows);
  }
  async snapshot(workspace:string,id:string,revision?:number):Promise<TableDocument>{
   const h=await this.head(workspace,id),at=revision??h.revision;
-  const first=await this.snapshotPage(workspace,id,at);let next=first.next;const records=first.records;
-  while(next!==null){const page=await this.snapshotPage(workspace,id,at,next);records.push(...page.records);next=page.next;}
+  const readPage=(after=0)=>revision==null?this.currentSnapshotPage(h,after):this.snapshotPage(workspace,id,at,after);
+  const first=await readPage();let next=first.next;const records=first.records;
+  while(next!==null){const page=await readPage(next);records.push(...page.records);next=page.next;}
   if(records.length!==first.rowCount)throw new AppError('table_history_incomplete','Snapshot record count does not match its revision',409);
   return {...first.header,records};
  }

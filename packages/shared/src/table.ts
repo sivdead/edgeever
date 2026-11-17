@@ -53,10 +53,15 @@ export type TableView = {
   sort: TableSort | null;
 };
 
-type TableData = { fields: TableField[]; records: TableRecord[] };
+type TableData = { fields: TableField[]; records: TableRecord[]; cellEncoding?: "nullable-v1" };
 export type LegacyTableDocument = TableData & { schemaVersion: typeof TABLE_SCHEMA_VERSION; view: TableView };
 export type NamedViewTableDocument = TableData & { schemaVersion: typeof TABLE_VIEW_SCHEMA_VERSION; views: NamedTableView[] };
 export type TableDocument = LegacyTableDocument | NamedViewTableDocument;
+
+const tableEncoding = (document: { cellEncoding?: unknown }) => document.cellEncoding === "nullable-v1"
+  ? { cellEncoding: "nullable-v1" as const } : {};
+const coerceDocumentCell = (document: TableDocument, field: TableField, value: unknown) =>
+  document.cellEncoding === "nullable-v1" && value === null ? null : coerceTableCell(field, value);
 
 export type TableSeedLabels = {
   name?: string;
@@ -296,6 +301,7 @@ export const projectLegacyTableDocument = (document: TableDocument): LegacyTable
   if (document.schemaVersion === TABLE_SCHEMA_VERSION) return document;
   return {
     schemaVersion: TABLE_SCHEMA_VERSION, fields: document.fields, records: document.records,
+    ...tableEncoding(document),
     view: legacyViewProjection(document.views[0]!, document.fields) ?? { filters: [], sort: null },
   };
 };
@@ -308,7 +314,7 @@ export const saveTableViews = (document: TableDocument, views: NamedTableView[])
     const view = legacyViewProjection(first, document.fields);
     if (view) return { ...document, view };
   }
-  return { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields: document.fields, records: document.records, views: validated };
+  return { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields: document.fields, records: document.records, views: validated, ...tableEncoding(document) };
 };
 
 type TableDocumentMetadata = { fields: TableField[]; recordCount: number };
@@ -365,11 +371,11 @@ function readTableDocumentJson(json: string | null, includeRecords: boolean): Ta
     }
     const metadata = { fields, recordCount: value.records.length };
     if (value.schemaVersion === TABLE_SCHEMA_VERSION) {
-      return records ? { schemaVersion: TABLE_SCHEMA_VERSION, fields, records, view: parseView(value.view, new Set(fields.map((field) => field.id))) } : metadata;
+      return records ? { schemaVersion: TABLE_SCHEMA_VERSION, fields, records, view: parseView(value.view, new Set(fields.map((field) => field.id))), ...tableEncoding(value) } : metadata;
     }
     const views = parseNamedTableViews(value.views, fields);
     if (!views) return null;
-    return records ? { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields, records, views } : metadata;
+    return records ? { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields, records, views, ...tableEncoding(value) } : metadata;
   } catch {
     return null;
   }
@@ -577,7 +583,7 @@ export const updateTableField = (document: TableDocument, fieldId: string, patch
     fields: document.fields.map((field) => field.id === fieldId ? next : field),
     records: document.records.map((record) => ({
       ...record,
-      cells: { ...record.cells, [fieldId]: coerceTableCell(next, record.cells[fieldId]) },
+      cells: { ...record.cells, [fieldId]: coerceDocumentCell(document, next, record.cells[fieldId]) },
     })),
   };
 };
@@ -620,7 +626,7 @@ export const updateTableCell = (document: TableDocument, recordId: string, field
   return {
     ...document,
     records: document.records.map((record) => record.id === recordId
-      ? { ...record, cells: { ...record.cells, [fieldId]: coerceTableCell(field, value) } }
+      ? { ...record, cells: { ...record.cells, [fieldId]: coerceDocumentCell(document, field, value) } }
       : record),
   };
 };

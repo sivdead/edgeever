@@ -4,7 +4,7 @@ This local candidate follows the [maintainer's storage direction](https://github
 
 ## Design and entry points
 
-- `apps/api/src/shared-table-store.ts`: shared JSON records scoped by workspace/table, optimistic record writes, search projection, immutable record versions, fixed-revision snapshots and explicit historical/backup restoration. Ordinary edits touch only changed records. Full replacement is reserved for explicit restore.
+- `apps/api/src/shared-table-store.ts`: shared JSON records scoped by workspace/table, optimistic record writes, search projection, immutable record versions and explicit restoration. Current complete snapshots read current records and validate their starting revision after each page; concurrent publication returns 409 instead of mixed values. Explicit-revision snapshots/pages reconstruct immutable history. Ordinary edits touch only changed records; full replacement is reserved for explicit restore.
 - `apps/api/src/shared-table-index.ts`: partial expression indexes for the leading sort field of saved views, reused by field/direction/expression. Temporary queries may reuse existing indexes but create none. Views, type changes and historical restoration maintain index metadata transactionally.
 - `apps/api/src/shared-table-query.ts` and `table-record-query.ts`: reuse the query compiler with scoped JSON expressions, 50-record pages and cursor revision checks. Small select prefixes reuse existing secondary-field indexes with disjoint value/position seeks; payload joins include workspace/table scope. Exact counts run only on the first filtered page; unfiltered counts come from metadata. Offline ordering uses the previously agreed Unicode scalar order.
 - `apps/api/src/shared-table-type-change.ts`: strict preflight, confirmation, persisted preparation batches, table-scoped write lock, cancellation and atomic publication. Old values remain readable while preparation runs. Each historical revision retains its original fields and cell values, including across field types.
@@ -12,14 +12,14 @@ This local candidate follows the [maintainer's storage direction](https://github
 - `schema.sql`: explicit experimental schema; production migrations and startup do not load it. The number of shared tables does not grow with logical table count. Saved-field indexes do grow, so their write and space costs remain part of acceptance.
 - `routes.ts`: local HTTP harness reusing existing scope checks. It is never imported by the production API entry point.
 
-The service uses the existing `DatabaseAdapter` without Cloudflare SDK calls or extra dependencies. `initialize` explicitly imports a complete legacy document locally; it is not a resumable production migration. `serializeSharedTableSnapshot` preserves nulls using the earlier `nullable-v1` marker; ordinary serialization and unmarked legacy input retain their existing behavior.
+The service uses the existing `DatabaseAdapter` without Cloudflare SDK calls or extra dependencies. `initialize` explicitly imports a complete legacy document locally; it is not a resumable production migration. Shared snapshot responses and query-page headers carry `nullable-v1`, including reads of older candidate headers without it; the dedicated exporter uses the same rule. Parsing, generic edits, view-format projection and Markdown/ZIP serialization/reimport retain this metadata and unchanged nulls without manual markers. Output normalization writes no data or history. Ordinary unmarked legacy documents retain prior coercion and are not automatically marked; API validation and CSV visible-value export are unchanged.
 
 ## Run locally
 
 From the candidate repository root with existing dependencies available:
 
 ```sh
-bun test apps/api/src/table-query-contains.test.mjs apps/api/src/shared-table-review.integration.test.mjs apps/api/src/shared-table-query-budget.test.mjs apps/api/src/shared-table-store.integration.test.mjs packages/shared/src/table-conversion.test.mjs packages/shared/src/table.test.mjs
+bun test apps/api/src/table-query-contains.test.mjs apps/api/src/shared-table-review.integration.test.mjs apps/api/src/shared-table-snapshot.integration.test.mjs apps/api/src/shared-table-query-budget.test.mjs apps/api/src/shared-table-store.integration.test.mjs packages/shared/src/table-conversion.test.mjs packages/shared/src/table.test.mjs
 bun scripts/experiments/shared-records/verify.mjs test-results/shared-records-run
 bun run typecheck
 bun run typecheck:mobile
@@ -41,5 +41,9 @@ bun scripts/experiments/shared-records/compare-queries.mjs <baseline-output> <co
 ```
 
 The comparison opens existing databases read-only and replays old/new SQL against the same data. An `EXPLAIN` temporary sort over at most 51 candidates is different from repeatedly sorting all table records.
+
+Current-snapshot budgets cover empty tables and 100/200/400 rows, with 1/10/50 revisions. At 200 rows, current reads use 4,819 local VM instructions at every tested history size; 50 revisions previously used 324,666. Four data pages use nine queries and return 208 adapter rows including lookahead/metadata, without history scans or counts. A current-document export is measured separately from an archive containing historical revisions. Explicit historical reads, including an explicit request for the latest revision, retain history-dependent work. All history is retained; no cleanup/checkpoints are introduced. See [snapshot and encoding acceptance](../../../docs/changes/evidence/2026-11-16-shared-records/snapshot-encoding-review.json). Full-history exports and production request scheduling need their own budgets.
+
+Field metadata currently supports rename/reorder, which refresh row search projections, and type jobs; field addition/removal is not implemented in this service. Optimistic conflicts are table-wide, not per-record merging. Actual offline-queue reconnection/replay, cross-type old drafts and lost-response retries remain production-integration gates. The candidate's disclosed global Unicode ordering is unchanged by these repairs; its effect on existing editors requires a separate compatibility decision before product integration.
 
 Production automatic migration, offline queues, all public-form and resource-write paths, default backup entry points, native upgrades and rollback are not switched to this candidate. The ZIP test covers a small table with cross-type histories and attachment bytes; it does not establish near-limit large-archive restoration. Existing ZIP limits remain. Cloud D1 billing and Workers Free CPU require separate authorized validation; this iteration makes no cloud requests.

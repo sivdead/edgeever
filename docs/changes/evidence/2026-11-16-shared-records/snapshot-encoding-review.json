@@ -1,0 +1,223 @@
+{
+  "baselineCommit": "d390d312963ba59a10403b6a7a960b596cad2f70",
+  "scope": "Local candidate repair for nullable-v1 generic round trips and unspecified-revision current snapshots. Existing global ordering and production integration are unchanged.",
+  "checks": {
+    "targeted": {
+      "passed": 57,
+      "failed": 0,
+      "assertions": 2069,
+      "files": 7
+    },
+    "existingGenericCallers": {
+      "passed": 28,
+      "failed": 0,
+      "assertions": 269,
+      "files": 3
+    },
+    "rootTypecheck": "passed after final producer-boundary repair",
+    "mobileTypecheck": "passed after shared parser repair; reused because later changes only affect API output/test/docs",
+    "webBuild": "passed after shared parser repair; reused because later changes only affect API output/test/docs",
+    "schemaOrDependenciesChanged": false
+  },
+  "resolvedBehaviors": [
+    {
+      "behavior": "nullable-v1 survives producer and generic round trips",
+      "resolution": "Mark shared snapshot/query-page document outputs even when stored metadata is older and unmarked; retain encoding through parsing, edits, view projection and serialization/reimport. Ordinary unmarked legacy input retains prior coercion. No backfill/history writes or new API validation."
+    },
+    {
+      "behavior": "Current snapshots avoid unrequested historical work",
+      "resolution": "Page current records against a pinned head, recheck revision/visibility after each data read, and reject invalidated current reads without retry/fallback. Explicit revisions retain immutable historical reconstruction."
+    }
+  ],
+  "snapshotBefore": [
+    {
+      "rows": 100,
+      "history": 10,
+      "currentVm": 35328,
+      "backupVm": 33480,
+      "historicalVm": 9225,
+      "queries": 7,
+      "pages": 2,
+      "returnedRows": 106,
+      "readsHistory": true,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 1,
+      "currentVm": 11066,
+      "backupVm": 9218,
+      "historicalVm": 9218,
+      "queries": 13,
+      "pages": 4,
+      "returnedRows": 212,
+      "readsHistory": true,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 10,
+      "currentVm": 68666,
+      "backupVm": 66818,
+      "historicalVm": 18353,
+      "queries": 13,
+      "pages": 4,
+      "returnedRows": 212,
+      "readsHistory": true,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 50,
+      "currentVm": 324666,
+      "backupVm": 322818,
+      "historicalVm": 58953,
+      "queries": 13,
+      "pages": 4,
+      "returnedRows": 212,
+      "readsHistory": true,
+      "counts": 0
+    },
+    {
+      "rows": 400,
+      "history": 10,
+      "currentVm": 135342,
+      "backupVm": 133494,
+      "historicalVm": 36609,
+      "queries": 25,
+      "pages": 8,
+      "returnedRows": 424,
+      "readsHistory": true,
+      "counts": 0
+    }
+  ],
+  "snapshotAfter": [
+    {
+      "rows": 0,
+      "history": 10,
+      "currentVm": 2266,
+      "currentExportVm": 418,
+      "historicalVm": 511,
+      "explicitCurrentVm": 511,
+      "queries": 3,
+      "pages": 1,
+      "returnedRows": 2,
+      "readsHistory": false,
+      "counts": 0
+    },
+    {
+      "rows": 100,
+      "history": 10,
+      "currentVm": 3419,
+      "currentExportVm": 1571,
+      "historicalVm": 9225,
+      "explicitCurrentVm": 33480,
+      "queries": 5,
+      "pages": 2,
+      "returnedRows": 104,
+      "readsHistory": false,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 1,
+      "currentVm": 4819,
+      "currentExportVm": 2971,
+      "historicalVm": 9218,
+      "explicitCurrentVm": 9218,
+      "queries": 9,
+      "pages": 4,
+      "returnedRows": 208,
+      "readsHistory": false,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 10,
+      "currentVm": 4819,
+      "currentExportVm": 2971,
+      "historicalVm": 18353,
+      "explicitCurrentVm": 66818,
+      "queries": 9,
+      "pages": 4,
+      "returnedRows": 208,
+      "readsHistory": false,
+      "counts": 0
+    },
+    {
+      "rows": 200,
+      "history": 50,
+      "currentVm": 4819,
+      "currentExportVm": 2971,
+      "historicalVm": 58953,
+      "explicitCurrentVm": 322818,
+      "queries": 9,
+      "pages": 4,
+      "returnedRows": 208,
+      "readsHistory": false,
+      "counts": 0
+    },
+    {
+      "rows": 400,
+      "history": 10,
+      "currentVm": 7619,
+      "currentExportVm": 5771,
+      "historicalVm": 36609,
+      "explicitCurrentVm": 133494,
+      "queries": 17,
+      "pages": 8,
+      "returnedRows": 416,
+      "readsHistory": false,
+      "counts": 0
+    }
+  ],
+  "metricNotes": [
+    "Local SQLite VM work, not D1 billed rows, latency or Workers CPU.",
+    "currentExportVm is materialization/export of the current document only, not an archive with additional history.",
+    "An observed fixed 1848-instruction overhead occurs in the first current-read flow relative to the following export flow; do not interpret this as faster export logic.",
+    "Explicit revision 1 and explicit-current flows retain measured history-dependent work."
+  ],
+  "currentContract": {
+    "pageRecordsAtMost": 51,
+    "visiblePageRecords": 50,
+    "queries": "1 initial head + 2 queries per data page",
+    "concurrency": "409 if revision changes; 404 if visibility is lost",
+    "history": "All versions retained; no new cleanup/checkpoints or retention limit."
+  },
+  "remainingGates": [
+    "Global Unicode-order impact on existing editors needs a separate product-compatibility decision; no ordering change in this repair.",
+    "Field addition/removal, actual offline reconnect/replay and merging, cross-type old drafts and lost-response retries remain integration work.",
+    "Full-history archive budgets, large ZIPs, production migration/rollback, native upgrade and actual Cloudflare CPU/billing remain unvalidated."
+  ],
+  "sourceSha256": {
+    "apps/api/src/shared-table-index.ts": "ee46bc0e326d4591072147eef277cbf25e9598862eb917bf8b7941d6d5ffe5ba",
+    "apps/api/src/shared-table-query-budget.test.mjs": "0e052ef3211ac61473ec5a02c8ed781eb4c1c032a7dd95005b4eed78e824cc01",
+    "apps/api/src/shared-table-query.ts": "f999697c40c941e5e0af8e6c84e631ebbf4d1f3d9688ef920417f1abae029163",
+    "apps/api/src/shared-table-review.integration.test.mjs": "9aade62552c2e77960e008f882d5a4249610409db575ebeb1cfc539ce7242d31",
+    "apps/api/src/shared-table-snapshot.integration.test.mjs": "f3f995ce649a91a3dcc9f71daf1d93e933c31f5807b8791818080519d4e82fc1",
+    "apps/api/src/shared-table-store.integration.test.mjs": "076bea9a603750f7ad9b9081362ed36f202a194d0afcd2ac5d9722ded704630e",
+    "apps/api/src/shared-table-store.ts": "3d1ea0fa021e5efcbb351922e4fe4dcade6af196ca2a6cd0f27f9c662c3e4f1b",
+    "apps/api/src/shared-table-type-change.ts": "6a4bafc297a75b04fef9b4fc465cb9a23f5989dec719703f1829570209b8d865",
+    "apps/api/src/table-query-contains.test.mjs": "6ceb06fea27d198f285606c2ae74accf6dd1e8a9c0c334d65c70045a127809d5",
+    "apps/api/src/table-query-contains.ts": "0df580bcfab1dad2deb6867a5061218dc8a05ea58ca7abf67337f078cc79d906",
+    "apps/api/src/table-query-sql.ts": "664555f48af69e5df1af9252a1091d52175bb80cbd39a2d2a08a64b62db7473a",
+    "apps/api/src/table-record-query.ts": "eb1c0723eebc74e9faae7867777ab9e8617863ec91e369aee8fe8c71875485eb",
+    "packages/shared/src/table-conversion.test.mjs": "2d2810e02de2c8f57844469730e598a56b962727e26128f5f9e503363155443a",
+    "packages/shared/src/table-conversion.ts": "167254b089372686bc7e6246dfe410300b19689354a6ca3ab102ef77e6673f19",
+    "packages/shared/src/table.test.mjs": "b26666ced26c34106ba00564e995b91096cb28c3bf949e62f4f8ebe26b79e9ba",
+    "packages/shared/src/table.ts": "bcc04b2c59a3375a38e47d3e9cde1738a5cc88fd747951a9aac1cd4186e6b094",
+    "scripts/experiments/shared-records/README.md": "b6b9124c74ec90d1ab40a3ce5a42b4e68e7ffcdf39b60f07a011dfbf9fc5ce5a",
+    "scripts/experiments/shared-records/compare-queries.mjs": "b5820cd4b1e8a5f392835f66d6aa4bd2936a3b570b6db175fa68581a7796efad",
+    "scripts/experiments/shared-records/query-metrics.mjs": "12d11db97508526c874c84f9bbbdb445c4d62c6ba1304bed0e69145ba4e8c356",
+    "scripts/experiments/shared-records/routes.ts": "acab594332fb010bbe74254706e2e6eb45b4acd7fc745431af7e4ec565ba1254",
+    "scripts/experiments/shared-records/schema.sql": "da214843b7a22e3a9712f44aa87563425190b30a6c7ba12567f8b2a1a3caae8d",
+    "scripts/experiments/shared-records/sqlite-metrics.py": "068ead0ad43864426c111af9812b51f7153c1b823821582f84ae5e4cd721a937",
+    "scripts/experiments/shared-records/support.mjs": "a4bee785aa5f3771c47428fdf06f6004ee66a43a9aff0037ceda1fa60f8c0008",
+    "scripts/experiments/shared-records/verify.mjs": "e3dd9f3d6796602ba8b8671255157d4b2185e5d646cb11f7595019d87a3688d9"
+  },
+  "reviewCompletion": {
+    "correctness": "HTTP snapshot/query output, generic edit/reimport, explicit history and guarded current snapshots checked; no unresolved confirmed finding within the repair scope.",
+    "simplification": "One shared output-encoding helper serves the snapshot/query/export boundaries; current/history page formatting remains shared. No schema, index, retry or cache additions.",
+    "designBoundary": "Encoding repair is confined to candidate TableDocument output and preservation; global ordering and unimplemented product integrations remain unchanged."
+  }
+}

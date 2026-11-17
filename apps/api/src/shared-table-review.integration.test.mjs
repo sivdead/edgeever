@@ -54,7 +54,7 @@ test('opaque record/field identities preserve accepted UTF-16 through edits, typ
   let job=await types.start('ws_default',e.memo.id,p.id,true);while(job.state!=='ready')job=await types.advance('ws_default',e.memo.id,job.id);
   await types.publish('ws_default',e.memo.id,job.id);
   expect((await e.store.snapshot('ws_default',e.memo.id)).records[0]).toEqual({id:record,cells:{...document.records[0].cells,[field]:42}});
-  await e.store.restore('ws_default',e.memo.id,1,3);expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(e.document);
+  await e.store.restore('ws_default',e.memo.id,1,3);expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...e.document,cellEncoding:'nullable-v1'});
  }finally{e.close();}
 });
 
@@ -72,8 +72,8 @@ test('prototype-named field IDs preserve own cells and missing values through sn
    await e.store.initialize('ws_default',e.memo.id,document);
    const snapshot=await e.store.snapshot('ws_default',e.memo.id);
    expect(Object.hasOwn(snapshot.records[0].cells,'__proto__')).toBe(true);
-   expect(snapshot).toEqual(expected);
-   expect(parseTableDocument(serializeSharedSnapshot(snapshot))).toEqual(expected);
+   expect(snapshot).toEqual({...expected,cellEncoding:'nullable-v1'});
+   expect(parseTableDocument(serializeSharedSnapshot(snapshot))).toEqual({...expected,cellEncoding:'nullable-v1'});
    await e.store.apply('ws_default',e.memo.id,{expectedRevision:1,puts:[{id:'r0',cells:{}}]});
    expect((await e.store.snapshot('ws_default',e.memo.id)).records[0].cells).toEqual(expected.records[1].cells);
   }finally{e.close();}
@@ -166,7 +166,7 @@ test('snapshot import is atomic for invalid later input and injected later datab
    expect(e.sql.query('SELECT count(*) AS n FROM ee_table_heads').get().n).toBe(0);
    if(failure==='database')e.sql.exec('DROP TRIGGER reject_import');
    await e.store.importSnapshots('ws_default',e.memo.id,[initial]);
-   expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual(initial);
+   expect(await e.store.snapshot('ws_default',e.memo.id)).toEqual({...initial,cellEncoding:'nullable-v1'});
   }finally{e.close();}
  }
 });

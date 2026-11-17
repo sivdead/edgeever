@@ -22,9 +22,52 @@ import {
   getTableSummary,
   getTableViews,
   saveTableViews,
+  projectLegacyTableDocument,
 } from "./table.ts";
 
 describe("structured table documents", () => {
+  const nullableFields = [
+    { id: "text", name: "Text", type: "text" },
+    { id: "number", name: "Number", type: "number" },
+    { id: "check", name: "Check", type: "checkbox" },
+    { id: "date", name: "Date", type: "date" },
+    { id: "select", name: "Select", type: "select", options: ["A", "B"] },
+    { id: "url", name: "URL", type: "url" },
+    { id: "files", name: "Files", type: "attachment" },
+  ];
+  const nullCells = Object.fromEntries(nullableFields.map((field) => [field.id, null]));
+
+  test("preserves nullable encoding through generic edits, view transitions and repeated serialization", () => {
+    for (const schemaVersion of [1, 2]) {
+      const source = { schemaVersion, cellEncoding: "nullable-v1", fields: nullableFields,
+        records: [{ id: "r0", cells: nullCells }],
+        ...(schemaVersion === 1 ? { view: { filters: [], sort: null } }
+          : { views: [{ id: "default", name: "All", match: "all", filters: [], sorts: [] }] }),
+      };
+      let document = parseTableDocument(serializeTableDocument(source));
+      document = updateTableCell(document, "r0", "text", "edited");
+      document = updateTableField(document, "select", { name: "Renamed" });
+      document = updateTableField(document, "check", { name: "Renamed check" });
+      document = saveTableViews(document, [{ id: "default", name: "Named", match: "all", filters: [], sorts: [] }]);
+      document = projectLegacyTableDocument(document);
+      for (let round = 0; round < 3; round++) document = parseTableDocument(serializeTableDocument(document));
+      expect(document.records[0].cells).toEqual({ ...nullCells, text: "edited" });
+      expect(document.cellEncoding).toBe("nullable-v1");
+      document = updateTableCell(document, "r0", "text", null);
+      expect(parseTableDocument(serializeTableDocument(document)).records[0].cells).toEqual(nullCells);
+    }
+  });
+
+  test("unmarked documents retain existing null normalization and gain no encoding marker", () => {
+    const source = { schemaVersion: 1, fields: nullableFields, records: [{ id: "r0", cells: nullCells }], view: { filters: [], sort: null } };
+    const original = parseTableDocument(serializeTableDocument(source));
+    let edited = updateTableField(updateTableCell(original, "r0", "text", null), "check", { name: "Renamed check" });
+    edited = saveTableViews(edited, [{ id: "default", name: "Named", match: "all", filters: [], sorts: [] }]);
+    const result = parseTableDocument(serializeTableDocument(edited));
+    expect(result.records[0].cells).toEqual({ text: "", number: null, check: false, date: "", select: "", url: "", files: [] });
+    expect(Object.hasOwn(result, "cellEncoding")).toBe(false);
+  });
+
   test("round-trips fields, records, filters, and sort through the markdown envelope", () => {
     const seeded = createDefaultTableDocument();
     const withView = replaceTableView(updateTableCell(seeded, "rec_sample", "fld_name", "阅读清单"), {
