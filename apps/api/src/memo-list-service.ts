@@ -24,6 +24,7 @@ export type MemoSummaryRow = {
   excerpt: string;
   content_text?: string | null;
   is_poster?: number;
+  shared_table_count?: number | null;
   content_markdown?: string | null;
   tags_json: string;
   is_pinned: number;
@@ -72,6 +73,20 @@ export type ListMemosResult = {
 const DEFAULT_MEMO_LIST_LIMIT = 100;
 const MAX_MEMO_LIST_LIMIT = 200;
 
+const memoTableSummary = (row: MemoSummaryRow) => {
+  const summary = getTableSummary(row.content_markdown);
+  if (summary.tablePreview && row.shared_table_count != null) {
+    summary.tablePreview.recordCount = row.shared_table_count;
+  }
+  return summary;
+};
+
+// Keep normal note search on the existing FTS index and include indexed table rows.
+export const sharedTableFtsMatches = `SELECT r.table_id
+  FROM ee_table_search f JOIN ee_table_records r ON r.id = f.rowid
+  JOIN memo_contents tc ON tc.memo_id = r.table_id AND tc.shared_table_revision IS NOT NULL
+  WHERE ee_table_search MATCH ? AND r.workspace_id = ?`;
+
 export const mapMemoSummary = (row: MemoSummaryRow): MemoSummary => ({
   id: row.id,
   notebookId: row.notebook_id,
@@ -84,7 +99,7 @@ export const mapMemoSummary = (row: MemoSummaryRow): MemoSummary => ({
   ...getInfographicSummary(row.content_markdown),
   ...getPosterSummary(row.content_markdown),
   ...(row.is_poster !== undefined ? { poster: Boolean(row.is_poster) } : {}),
-  ...getTableSummary(row.content_markdown),
+  ...memoTableSummary(row),
   tags: parseJsonArray(row.tags_json),
   isPinned: Boolean(row.is_pinned),
   isArchived: Boolean(row.is_archived),
@@ -267,7 +282,7 @@ export const listMemos = async (
     const ftsQuery = toFtsQuery(query);
     const likeQuery = `%${escapeLike(query)}%`;
     if (ftsQuery) {
-      const searchPrefix = [ftsQuery, likeQuery, likeQuery, likeQuery];
+      const searchPrefix = [ftsQuery, likeQuery, likeQuery, likeQuery, ftsQuery, input.workspaceId];
       const [rows, totalRow] = await Promise.all([
         database.prepare(
           `WITH raw_matches(memo_id, rank) AS (
@@ -283,6 +298,10 @@ export const listMemos = async (
              WHERE m.title LIKE ? ESCAPE '\\'
                 OR c.content_text LIKE ? ESCAPE '\\'
                 OR m.tags_json LIKE ? ESCAPE '\\'
+
+             UNION ALL
+
+             SELECT hits.table_id, 100.0 FROM (${sharedTableFtsMatches}) hits
            ),
            search_matches AS (
              SELECT memo_id, MIN(rank) AS rank
@@ -291,7 +310,10 @@ export const listMemos = async (
            )
            SELECT m.id, m.notebook_id, m.title, m.excerpt, m.tags_json, m.is_pinned,
                   m.is_archived, m.is_deleted, m.created_at, m.updated_at, m.deleted_at, mc.revision,
-                  mc.content_text, mc.content_markdown
+                  mc.content_text, mc.content_markdown,
+                  CASE WHEN mc.shared_table_revision IS NOT NULL THEN (
+                    SELECT row_count FROM ee_table_heads WHERE workspace_id = m.workspace_id AND table_id = m.id
+                  ) END AS shared_table_count
            FROM search_matches s
            INNER JOIN memos m ON m.id = s.memo_id
            INNER JOIN memo_contents mc ON mc.memo_id = m.id
@@ -313,6 +335,10 @@ export const listMemos = async (
              WHERE m.title LIKE ? ESCAPE '\\'
                 OR c.content_text LIKE ? ESCAPE '\\'
                 OR m.tags_json LIKE ? ESCAPE '\\'
+
+             UNION ALL
+
+             ${sharedTableFtsMatches}
            ),
            search_matches AS (
              SELECT memo_id
@@ -337,7 +363,10 @@ export const listMemos = async (
       database.prepare(
         `SELECT m.id, m.notebook_id, m.title, m.excerpt, m.tags_json, m.is_pinned,
                 m.is_archived, m.is_deleted, m.created_at, m.updated_at, m.deleted_at, mc.revision,
-                mc.content_text, mc.content_markdown
+                mc.content_text, mc.content_markdown,
+                  CASE WHEN mc.shared_table_revision IS NOT NULL THEN (
+                    SELECT row_count FROM ee_table_heads WHERE workspace_id = m.workspace_id AND table_id = m.id
+                  ) END AS shared_table_count
          FROM memos m
          INNER JOIN memo_contents mc ON mc.memo_id = m.id
          WHERE ${searchCursorConditions.join(" AND ")}
@@ -358,7 +387,10 @@ export const listMemos = async (
     database.prepare(
       `SELECT m.id, m.notebook_id, m.title, m.excerpt, m.tags_json, m.is_pinned,
               m.is_archived, m.is_deleted, m.created_at, m.updated_at, m.deleted_at, mc.revision,
-              mc.content_text, mc.content_markdown
+              mc.content_text, mc.content_markdown,
+                  CASE WHEN mc.shared_table_revision IS NOT NULL THEN (
+                    SELECT row_count FROM ee_table_heads WHERE workspace_id = m.workspace_id AND table_id = m.id
+                  ) END AS shared_table_count
        FROM memos m
        INNER JOIN memo_contents mc ON mc.memo_id = m.id
        WHERE ${cursorConditions.join(" AND ")}

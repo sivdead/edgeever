@@ -53,10 +53,15 @@ export type TableView = {
   sort: TableSort | null;
 };
 
-type TableData = { fields: TableField[]; records: TableRecord[] };
+type TableData = { fields: TableField[]; records: TableRecord[]; cellEncoding?: "nullable-v1" };
 export type LegacyTableDocument = TableData & { schemaVersion: typeof TABLE_SCHEMA_VERSION; view: TableView };
 export type NamedViewTableDocument = TableData & { schemaVersion: typeof TABLE_VIEW_SCHEMA_VERSION; views: NamedTableView[] };
 export type TableDocument = LegacyTableDocument | NamedViewTableDocument;
+
+const tableEncoding = (document: { cellEncoding?: unknown }) => document.cellEncoding === "nullable-v1"
+  ? { cellEncoding: "nullable-v1" as const } : {};
+const coerceDocumentCell = (document: TableDocument, field: TableField, value: unknown) =>
+  document.cellEncoding === "nullable-v1" && value === null ? null : coerceTableCell(field, value);
 
 export type TableSeedLabels = {
   name?: string;
@@ -296,6 +301,7 @@ export const projectLegacyTableDocument = (document: TableDocument): LegacyTable
   if (document.schemaVersion === TABLE_SCHEMA_VERSION) return document;
   return {
     schemaVersion: TABLE_SCHEMA_VERSION, fields: document.fields, records: document.records,
+    ...tableEncoding(document),
     view: legacyViewProjection(document.views[0]!, document.fields) ?? { filters: [], sort: null },
   };
 };
@@ -308,7 +314,7 @@ export const saveTableViews = (document: TableDocument, views: NamedTableView[])
     const view = legacyViewProjection(first, document.fields);
     if (view) return { ...document, view };
   }
-  return { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields: document.fields, records: document.records, views: validated };
+  return { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields: document.fields, records: document.records, views: validated, ...tableEncoding(document) };
 };
 
 type TableDocumentMetadata = { fields: TableField[]; recordCount: number };
@@ -354,25 +360,28 @@ function readTableDocumentJson(json: string | null, includeRecords: boolean): Ta
       if (!validateCells) continue;
       const rawCells = isRecord(item.cells) ? item.cells : {};
       if (!records) {
-        for (const field of fields) coerceTableCell(field, rawCells[field.id]);
+        for (const field of fields) coerceTableCell(field, Object.hasOwn(rawCells, field.id) ? rawCells[field.id] : undefined);
         continue;
       }
-      const cells: Record<string, TableCellValue> = {};
-      for (const field of fields) cells[field.id] = coerceTableCell(field, rawCells[field.id]);
+      const cells: Record<string, TableCellValue> = Object.fromEntries(fields.map((field) => {
+        const raw = Object.hasOwn(rawCells, field.id) ? rawCells[field.id] : undefined;
+        return [field.id, value.cellEncoding === "nullable-v1" && raw === null ? null : coerceTableCell(field, raw)];
+      }));
       records.push({ id: item.id, cells });
     }
     const metadata = { fields, recordCount: value.records.length };
     if (value.schemaVersion === TABLE_SCHEMA_VERSION) {
-      return records ? { schemaVersion: TABLE_SCHEMA_VERSION, fields, records, view: parseView(value.view, new Set(fields.map((field) => field.id))) } : metadata;
+      return records ? { schemaVersion: TABLE_SCHEMA_VERSION, fields, records, view: parseView(value.view, new Set(fields.map((field) => field.id))), ...tableEncoding(value) } : metadata;
     }
     const views = parseNamedTableViews(value.views, fields);
     if (!views) return null;
-    return records ? { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields, records, views } : metadata;
+    return records ? { schemaVersion: TABLE_VIEW_SCHEMA_VERSION, fields, records, views, ...tableEncoding(value) } : metadata;
   } catch {
     return null;
   }
 }
 
+export { readTableDocumentJson as parseTableDocumentJson };
 export const parseTableDocument = (markdown: string | null | undefined) => readTableDocumentJson(decodeTableDocumentMarker(markdown), true);
 export const parseTableDocumentMetadata = (markdown: string | null | undefined) => readTableDocumentJson(decodeTableDocumentMarker(markdown), false);
 
@@ -489,6 +498,15 @@ const matchesFilter = (field: TableField, value: TableCellValue, filter: TableFi
   return String(value ?? "").toLocaleLowerCase().includes((filter.value ?? "").trim().toLocaleLowerCase());
 };
 
+export const createTableSortKey = (field: TableField, legacy = false) => {
+  const options = !legacy && field.type === "select"
+    ? new Map((field.options ?? []).map((option, index) => [option, index]))
+    : undefined;
+  return (value: TableCellValue) => options
+    ? typeof value === "string" ? options.get(value) ?? null : null
+    : cellSortText(field, value);
+};
+
 export const applyTableView = (
   document: TableDocument, records = document.records, view = getTableViews(document)[0]!, now = new Date(),
 ) => {
@@ -506,17 +524,11 @@ export const applyTableView = (
   const sorts = view.sorts.flatMap((rule) => {
     const field = fields.get(rule.fieldId);
     if (!field) return [];
-    const options = !rule.legacy && field.type === "select"
-      ? new Map((field.options ?? []).map((option, index) => [option, index]))
-      : undefined;
-    return [{ field, direction: rule.direction === "desc" ? -1 : 1, options }];
+    return [{ field, direction: rule.direction === "desc" ? -1 : 1, key: createTableSortKey(field, rule.legacy === true) }];
   });
   if (!sorts.length) return filtered;
   return filtered.sort((left, right) => {
-    for (const { field, direction, options } of sorts) {
-      const key = (value: TableCellValue) => options
-        ? typeof value === "string" ? options.get(value) ?? null : null
-        : cellSortText(field, value);
+    for (const { field, direction, key } of sorts) {
       const a = key(left.cells[field.id] ?? null);
       const b = key(right.cells[field.id] ?? null);
       if (a === null && b === null) continue;
@@ -559,7 +571,7 @@ export const updateTableField = (document: TableDocument, fieldId: string, patch
     fields: document.fields.map((field) => field.id === fieldId ? next : field),
     records: document.records.map((record) => ({
       ...record,
-      cells: { ...record.cells, [fieldId]: coerceTableCell(next, record.cells[fieldId]) },
+      cells: { ...record.cells, [fieldId]: coerceDocumentCell(document, next, record.cells[fieldId]) },
     })),
   };
 };
@@ -602,7 +614,7 @@ export const updateTableCell = (document: TableDocument, recordId: string, field
   return {
     ...document,
     records: document.records.map((record) => record.id === recordId
-      ? { ...record, cells: { ...record.cells, [fieldId]: coerceTableCell(field, value) } }
+      ? { ...record, cells: { ...record.cells, [fieldId]: coerceDocumentCell(document, field, value) } }
       : record),
   };
 };

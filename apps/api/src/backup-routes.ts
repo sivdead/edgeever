@@ -1,3 +1,4 @@
+import { hydrateSharedMemoRows } from "./table-memo-storage";
 import {
   emptyDoc,
   JsonBackupResourceMetadataSchema,
@@ -51,6 +52,7 @@ export type BackupMemoDetailRow = {
   content_markdown: string;
   content_text: string;
   content_hash: string;
+  shared_table_revision?: number | null;
   source_memo_ids: string;
   merge_source_count: number;
   merged_into_memo_id: string | null;
@@ -66,6 +68,7 @@ type BackupRevisionRow = {
   content_markdown: string;
   content_text: string;
   content_hash: string;
+  shared_table_revision?: number | null;
   created_by: string;
   created_at: string;
 };
@@ -134,7 +137,7 @@ export const parseMarkdownExportMemoIds = (value: string | undefined): { ids: st
 
 const MEMO_EXPORT_SELECT_SQL = `SELECT m.id, m.notebook_id, m.title, m.excerpt, m.tags_json, m.is_pinned,
             m.is_archived, m.is_deleted, m.created_at, m.updated_at, m.deleted_at, mc.revision,
-            mc.content_json, mc.content_markdown, mc.content_text, mc.content_hash,
+            mc.content_json, mc.content_markdown, mc.content_text, mc.content_hash, mc.shared_table_revision,
             m.source_memo_ids, m.merge_source_count, m.merged_into_memo_id
      FROM memos m
      INNER JOIN memo_contents mc ON mc.memo_id = m.id`;
@@ -166,7 +169,7 @@ const readBackupState = (database: DatabaseAdapter, workspaceId: string) => data
    FROM workspaces w WHERE w.id = ?`,
 ).bind(workspaceId).first<BackupStateRow>();
 
-const readBackupRelations = async (database: DatabaseAdapter, memoIds: string[]) => {
+const readBackupRelations = async (database: DatabaseAdapter, workspaceId: string, memoIds: string[]) => {
   if (memoIds.length === 0) return { resources: [] as Resource[], revisions: [] as JsonBackupRevision[] };
   const placeholders = memoIds.map(() => "?").join(", ");
   const [resources, revisions] = await Promise.all([
@@ -178,11 +181,11 @@ const readBackupRelations = async (database: DatabaseAdapter, memoIds: string[])
     ).bind(...memoIds).all<ResourceRow>(),
     database.prepare(
       `SELECT id, memo_id, revision, title, tags_json, content_json, content_markdown,
-              content_text, content_hash, created_by, created_at FROM memo_revisions
+              content_text, content_hash, created_by, created_at, shared_table_revision FROM memo_revisions
        WHERE memo_id IN (${placeholders}) ORDER BY memo_id ASC, revision ASC, created_at ASC`,
     ).bind(...memoIds).all<BackupRevisionRow>(),
   ]);
-  return { resources: resources.results.map(mapResource), revisions: revisions.results.map(mapJsonBackupRevision) };
+  return { resources: resources.results.map(mapResource), revisions: (await hydrateSharedMemoRows(database, workspaceId, revisions.results, true)).map(mapJsonBackupRevision) };
 };
 
 const exportCursorSchema = z.object({
@@ -347,9 +350,9 @@ export const registerBackupRoutes = (
       const rows = await database.prepare(
         `${MEMO_EXPORT_SELECT_SQL} WHERE m.workspace_id = ? AND m.is_deleted = 0 AND m.id > ? ORDER BY m.id ASC LIMIT ?`,
       ).bind(workspaceId, after, limit + 1).all<BackupMemoDetailRow>();
-      const selected = rows.results.slice(0, limit);
+      const selected = await hydrateSharedMemoRows(database, workspaceId, rows.results.slice(0, limit));
       ids = rows.results.map((row) => row.id);
-      result = { memos: selected.map(dependencies.mapMemoDetail), ...await readBackupRelations(database, selected.map((row) => row.id)) };
+      result = { memos: selected.map(dependencies.mapMemoDetail), ...await readBackupRelations(database, workspaceId, selected.map((row) => row.id)) };
     } else if (kind === "notebooks") {
       const rows = await database.prepare(notebookSelectSql(
         `WHERE n.workspace_id = ? AND n.is_deleted = 0 AND n.id > ? GROUP BY n.id ORDER BY n.id ASC LIMIT ?`,
@@ -392,7 +395,7 @@ export const registerBackupRoutes = (
       includeTotal,
       cursor,
     );
-    const page = memoRows.results.slice(0, limit);
+    const page = await hydrateSharedMemoRows(context.env.storage.db, workspaceId, memoRows.results.slice(0, limit));
     const memoIds = page.map((row) => row.id);
     let resources: Resource[] = [];
 
@@ -430,32 +433,9 @@ export const registerBackupRoutes = (
     const workspaceId = getWorkspaceId(context);
     const includeTotal = cursor ? context.req.query("includeTotal") === "1" : offset === 0 || context.req.query("includeTotal") !== "0";
     const [memoRows, totalRow] = await listBackupPage(context.env.storage.db, workspaceId, limit, offset, includeTotal, cursor);
-    const page = memoRows.results.slice(0, limit);
+    const page = await hydrateSharedMemoRows(context.env.storage.db, workspaceId, memoRows.results.slice(0, limit));
     const memoIds = page.map((row) => row.id);
-    let resources: Resource[] = [];
-    let revisions: JsonBackupRevision[] = [];
-
-    if (memoIds.length > 0) {
-      const placeholders = memoIds.map(() => "?").join(", ");
-      const [resourceRows, revisionRows] = await Promise.all([
-        context.env.storage.db.prepare(
-          `SELECT id, memo_id, original_memo_id, bucket_name, object_key, storage_config_id, kind, mime_type,
-                  filename, byte_size, sha256, width, height, created_at, updated_at
-           FROM resources
-           WHERE is_deleted = 0 AND memo_id IN (${placeholders})
-           ORDER BY memo_id ASC, created_at ASC, id ASC`,
-        ).bind(...memoIds).all<ResourceRow>(),
-        context.env.storage.db.prepare(
-          `SELECT id, memo_id, revision, title, tags_json, content_json, content_markdown,
-                  content_text, content_hash, created_by, created_at
-           FROM memo_revisions
-           WHERE memo_id IN (${placeholders})
-           ORDER BY memo_id ASC, revision ASC, created_at ASC`,
-        ).bind(...memoIds).all<BackupRevisionRow>(),
-      ]);
-      resources = resourceRows.results.map(mapResource);
-      revisions = revisionRows.results.map(mapJsonBackupRevision);
-    }
+    const { resources, revisions } = await readBackupRelations(context.env.storage.db, workspaceId, memoIds);
 
     const totalCount = totalRow?.count ?? page.length;
     return context.json({

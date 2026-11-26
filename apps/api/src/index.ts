@@ -1,6 +1,7 @@
+import { readSharedMemoMarkdown } from "./table-memo-storage";
 import { servePublicDemoRequest } from "./public-demo-page";
 import { isEdgeEverAppPath } from "./app-paths";
-import { isDatabaseDailyQuotaError } from "./database-errors";
+import { isDatabaseDailyQuotaError, isTableMigrationPausedError } from "./database-errors";
 import {
   createExcerpt,
   docToText,
@@ -101,6 +102,7 @@ import {
 import { registerPluginDistributionRoutes } from "./plugin-distribution-routes";
 import { registerPosterRenderRoutes } from "./poster-render-routes";
 import { registerSyncRoutes } from "./sync-routes";
+import { registerSharedTableRoutes } from "./shared-table-routes";
 import { registerMemoRoutes } from "./memo-routes";
 import { registerScheduledTaskRoutes } from "./scheduled-task-routes";
 import { registerWorkspaceExtensionRoutes } from "./workspace-extension-routes";
@@ -372,6 +374,7 @@ registerSyncRoutes(app, {
   clampNumber: (...args) => clampNumber(...args),
   mapMemoDetail: (...args) => mapMemoDetail(...args),
 });
+registerSharedTableRoutes(app);
 registerImportRoutes(app);
 registerTagRoutes(app);
 registerPosterRenderRoutes(app);
@@ -401,7 +404,7 @@ registerMemoRoutes(app, {
   mergeMemos: (...args) => mergeMemosRecord(...args),
   moveMemos: (...args) => moveMemosRecord(...args),
   restoreMemo: (...args) => restoreMemoRecord(...args),
-  restoreMemoRevision: (...args) => restoreMemoRevisionService(...args, { getMemoDetail, getMemoDetailRow }),
+  restoreMemoRevision: (...args) => restoreMemoRevisionService(...args, { getMemoDetail, getMemoDetailRow, updateMemoRecord }),
   updateMemo: (...args) => updateMemoRecord(...args),
 });
 
@@ -516,7 +519,7 @@ const worker = {
       // to the asset shell so a typo does not become a JSON 404.
       if (pathname.startsWith("/share/")) {
         if (isPublicMemoSharePagePath(pathname)) {
-          const page = await renderPublicMemoSharePage(request, createCloudflareStorageAdapter(env).db, loadAppShell);
+          const page = await renderPublicMemoSharePage(request, createCloudflareStorageAdapter(env).db, loadAppShell, readSharedMemoMarkdown);
           if (page) return page;
         }
         return env.ASSETS.fetch(request);
@@ -568,6 +571,10 @@ app.onError((error, c) => {
 
   const requestError = httpExceptionError(c, error);
   if (requestError) return requestError;
+
+  if (isTableMigrationPausedError(error)) {
+    return apiError(c, "table_migration_in_progress", "Table writes are paused for storage maintenance.", 409);
+  }
 
   if (isDatabaseDailyQuotaError(error)) {
     console.error("EdgeEver database daily quota exhausted", error);
