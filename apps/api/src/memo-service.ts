@@ -472,7 +472,7 @@ export const getSharedMemoWriteState = (db: DatabaseAdapter, workspaceId: string
    JOIN notebooks n ON n.id = m.notebook_id AND n.workspace_id = h.workspace_id
    JOIN memo_contents c ON c.memo_id = m.id
    WHERE a.id = 1 AND h.workspace_id = ? AND h.table_id = ? AND m.is_deleted = 0 AND n.is_deleted = 0
-     AND (c.shared_table_revision IS NOT NULL OR c.content_markdown GLOB '*<!--*edgeever-table-v1:*-->*')`,
+     AND (c.shared_table_revision IS NOT NULL OR EXISTS (SELECT 1 FROM ee_table_marked_memos t WHERE t.memo_id = c.memo_id))`,
 ).bind(workspaceId, memoId).first<{
   id: string; notebook_id: string; title: string | null; tags_json: string; revision: number; content_hash: string;
   shared_table_revision: number; memo_shared_revision: number | null; header_json: string; row_count: number;
@@ -542,7 +542,7 @@ export const createMemoEditSession = async (c: AppContext, memoId: string): Prom
     `SELECT mc.revision, mc.content_hash, EXISTS (
        SELECT 1 FROM ee_table_activation a JOIN ee_table_heads h ON h.migration_run_id = a.run_id
        WHERE a.id = 1 AND h.workspace_id = m.workspace_id AND h.table_id = m.id
-         AND (mc.shared_table_revision IS NOT NULL OR mc.content_markdown GLOB '*<!--*edgeever-table-v1:*-->*')
+         AND (mc.shared_table_revision IS NOT NULL OR EXISTS (SELECT 1 FROM ee_table_marked_memos t WHERE t.memo_id = mc.memo_id))
      ) AS shared_table
      FROM memo_contents mc JOIN memos m ON m.id = mc.memo_id
      WHERE m.id = ? AND m.workspace_id = ? AND m.is_deleted = 0`,

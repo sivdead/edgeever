@@ -8,6 +8,14 @@ A normal upgrade starts bounded migration in the background. Until cutover, the 
 
 The main risks are publishing stale staged rows after concurrent edits, deletes or recreation, and losing post-cutover writes on rollback. Exercise real old-release data on D1 and a same-volume Docker SQLite upgrade, including sustained writes, resume, automatic cutover and rollback to a compatible server. Production rollout has separate acceptance. The maintenance-window procedure below records the earlier implementation and rehearsals.
 
+## Online migration review
+
+Preserve the existing table-marker syntax for ordinary notes and structured bodies. An unreadable current table must remain on the legacy source; editing its body must unblock an obsolete baseline or frozen replay. Check the caller’s storage budget against both frozen images in the claiming transaction. Generate the migration schedule in ordinary Workers and named environments and run it only for its own cron. Exercise edits around the old-to-new checkpoint, zero-space refusal without side effects, and custom deployment configurations. A failed batch leaves the legacy data and durable cursor intact. After activation use the previously verified shared-record rollback build.
+
+Verified on an isolated remote D1 and on the official `v2.31.2` Docker image with one persistent volume. Both upgraded from `0099` to `0107`, resumed at 75 rows, accepted both rounds of editor/sync/form writes and passed the compatible-service rollback and re-upgrade readback. Each retained a real table with an embedded NUL and allowed creating and editing ordinary text mentioning the marker between separate HTML comments. D1 activated 3 tables / 503 rows with empty queues, Docker 5 / 525 including its examples. The public release upgrade and the already-active `0106` candidate are different: a NUL table missed by that candidate is still readable in legacy form and switches to shared records on its next ordinary save.
+
+The regression suite covers obsolete, unreadable images at initial copy and catch-up, and rejection of zero space for an image claim or replacement without moving the checkpoint. Looking up a real table marker in 250/500/1,000/2,000 rows of text with four ordinary HTML comments per row took 0.06/0.10/0.20/0.37 ms (median of seven local SQLite reads).
+
 ## Initial scope and risk
 
 - Move current records from memo bodies to a shared JSON row table on D1 and Docker SQLite. Scope queries by workspace, table and row order. Update only the affected row and necessary history and indexes. Preserve fields, views, permissions, sort semantics and attachment references.
@@ -50,7 +58,7 @@ The main risks are publishing stale staged rows after concurrent edits, deletes 
 
 ## Operating an online upgrade
 
-Apply the regular schema migrations through `0106` and start the service. Cloudflare receives a migration cron every five minutes. Docker schedules the next batch after one second while copying. Both use up to four steps per invocation, up to 25 row operations per copy step. The owner can inspect `GET /api/v1/admin/table-storage`. Normal use requires no admin action. Before cutover, reads and writes use the old body. After cutover, roll the service back on the same database to a build that reads and writes shared records, such as `9f74dbd0`.
+Apply the regular schema migrations through `0107` and start the service. Cloudflare receives a migration cron every five minutes. Docker schedules the next batch after one second while copying. Both use up to four steps per invocation, up to 25 row operations per copy step. The owner can inspect `GET /api/v1/admin/table-storage`. Normal use requires no admin action. Before cutover, reads and writes use the old body. After cutover, roll the service back on the same database to a build that reads and writes shared records, such as `9f74dbd0`.
 
 D1 tracks estimated migration reads and writes per database. Once a committed step reaches one million planned reads or 25,000 planned writes for the UTC day, further automatic work waits until the next UTC day. The owner sees `paused` and `table_migration_budget_exhausted`. These are scheduling limits, not a measurement of remaining account capacity. A database or storage failure rolls back the current batch. Foreground writes still require the underlying database to accept writes.
 

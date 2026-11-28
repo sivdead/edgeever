@@ -4,6 +4,7 @@ import {
   parseTableDocument,
   type TableDocument,
 } from "@edgeever/shared";
+import { isTableMigrationBudgetError } from "./database-errors";
 import { AppError } from "./app-error";
 import { SharedTableStore, type SharedHead } from "./shared-table-store";
 import { TABLE_VIEW_INDEX_LIMIT, type SharedFieldIndex } from "./shared-table-index";
@@ -136,7 +137,7 @@ export class SharedTableMigration {
   async estimate(cursor?: TableEstimateCursor) {
     const limit = 20;
     const after = cursor?.memoId ?? "";
-    const page = (await this.sql`SELECT m.id, mc.content_markdown GLOB '*<!--*edgeever-table-v1:*-->*' AS table_marker
+    const page = (await this.sql`SELECT m.id, instr(mc.content_markdown,'edgeever-table-v1:')>0 AS table_marker
       FROM memos m JOIN memo_contents mc ON mc.memo_id = m.id WHERE m.id > ${after}
       ORDER BY m.id LIMIT ${limit}`.all<{ id: string; table_marker: number }>()).results;
     const estimate = zeroBudget();
@@ -210,7 +211,7 @@ export class SharedTableMigration {
       // transaction. Continue the initial copy from that image until replay.
       const source = await this.sql`SELECT m.id,m.workspace_id,COALESCE(d.before_markdown,mc.content_markdown) AS content_markdown
         FROM memos m JOIN memo_contents mc ON mc.memo_id=m.id LEFT JOIN ee_table_migration_dirty d ON d.memo_id=m.id
-        WHERE m.id=${tableId} AND (${state.after_position}=0 OR EXISTS (
+        WHERE m.id=${tableId} AND ((${state.after_position}=0 AND d.memo_id IS NULL) OR EXISTS (
           SELECT 1 FROM ee_table_heads h WHERE h.table_id=m.id AND h.migration_run_id=${state.run_id}))`.first<LegacySource>();
       const remaining = JSON.stringify(pending.slice(1));
       if (source && hasTableDocumentMarker(source.content_markdown)) {
@@ -225,11 +226,11 @@ export class SharedTableMigration {
       ]);
     }
 
-    if (state.scan_done || state.phase === "ready") return this.catchUp(state, requireBudget);
+    if (state.scan_done || state.phase === "ready") return this.catchUp(state, requireBudget, budget?.extraBytes);
     requireBudget(SCAN_BUDGET);
     const page = (
       await this
-        .sql`SELECT m.id, mc.content_markdown GLOB '*<!--*edgeever-table-v1:*-->*' AS table_marker
+        .sql`SELECT m.id, instr(mc.content_markdown,'edgeever-table-v1:')>0 AS table_marker
       FROM memos m JOIN memo_contents mc ON mc.memo_id = m.id WHERE m.id > ${state.after_memo_id}
       ORDER BY m.id LIMIT ${MEMO_BATCH}`.all<{
         id: string;
@@ -266,11 +267,18 @@ export class SharedTableMigration {
     return this.commit(state, statements);
   }
 
-  private async catchUp(state: ProgressRow, requireBudget: (cost: TableMigrationBudget) => void) {
+  private async catchUp(state: ProgressRow, requireBudget: (cost: TableMigrationBudget) => void, extraBytes?: number) {
     const sql = this.sql;
     requireBudget(SCAN_BUDGET);
     const target = await sql`SELECT r.memo_id AS id,m.workspace_id,r.markdown AS content_markdown
       FROM ee_table_migration_replay r JOIN memos m ON m.id=r.memo_id WHERE image='target'`.first<LegacySource>();
+    const spaceGuard = (id: string, copyBefore: boolean) => extraBytes === undefined ? [] : [sql`INSERT INTO ee_table_migration_space_guard
+      SELECT remaining FROM (SELECT ${extraBytes} - 8192 - length(CAST(coalesce(c.content_markdown,'') AS BLOB))
+        - CASE WHEN ${Number(copyBefore)}=1 AND h.table_id IS NOT NULL THEN length(CAST(d.before_markdown AS BLOB)) ELSE 0 END AS remaining
+        FROM ee_table_migration_dirty d JOIN memos m ON m.id=d.memo_id
+        LEFT JOIN memo_contents c ON c.memo_id=m.id
+        LEFT JOIN ee_table_heads h ON h.table_id=m.id AND h.migration_run_id=${state.run_id}
+        WHERE m.id=${id}) WHERE remaining<0`];
     if (!target) {
       const dirty = await sql`SELECT memo_id FROM ee_table_migration_dirty ORDER BY memo_id LIMIT 1`.first<{ memo_id: string }>();
       if (!dirty) return state.phase === "ready" ? progress(state) : this.commit(state, [
@@ -280,6 +288,7 @@ export class SharedTableMigration {
       // Freeze the pair, then release the dirty marker, all in one transaction.
       // Concurrent writes will remember the target as their next before image.
       return this.commit(state, [
+        ...spaceGuard(id, true),
         sql`INSERT INTO ee_table_migration_replay(image,memo_id,markdown)
           SELECT 'before',m.id,CASE WHEN h.table_id IS NULL THEN '' ELSE d.before_markdown END
           FROM memos m JOIN ee_table_migration_dirty d ON d.memo_id=m.id
@@ -292,7 +301,21 @@ export class SharedTableMigration {
     }
     const before = await sql`SELECT markdown FROM ee_table_migration_replay WHERE image='before' AND memo_id=${target.id}`.first<{markdown: string}>();
     const prior = before && hasTableDocumentMarker(before.markdown) ? this.parseSource({ ...target, content_markdown: before.markdown }) : null;
-    const next = hasTableDocumentMarker(target.content_markdown) ? this.parseSource(target) : null;
+    const marked = hasTableDocumentMarker(target.content_markdown);
+    const next = marked ? parseTableDocument(target.content_markdown) : null;
+    if (marked && !next) {
+      // An unreadable target has no staged rows of its own. Keep the original
+      // before image and claim the corrected body without copying the baseline again.
+      const newer = await sql`SELECT 1 FROM ee_table_migration_dirty WHERE memo_id=${target.id}`.first();
+      if (!newer) throw new AppError("invalid_legacy_table", `Cannot parse table ${target.id}`, 409);
+      return this.commit(state, [
+        ...spaceGuard(target.id, false),
+        sql`UPDATE ee_table_migration_replay SET markdown=coalesce((SELECT content_markdown FROM memo_contents
+          WHERE memo_id=${target.id}),'') WHERE image='target' AND memo_id=${target.id}`,
+        sql`DELETE FROM ee_table_migration_dirty WHERE memo_id=${target.id}`,
+        sql`UPDATE ee_table_migration SET step=step+1 WHERE id=1`,
+      ]);
+    }
     const offset = state.after_position;
     const statements = [sql`INSERT INTO ee_table_assertion SELECT 0 WHERE NOT EXISTS (
       SELECT 1 FROM ee_table_migration_replay WHERE image='target' AND memo_id=${target.id})`];
@@ -366,6 +389,7 @@ export class SharedTableMigration {
       const latest = await this.state();
       if (latest?.run_id !== state.run_id || latest.step !== state.step)
         return latest ? progress(latest) : this.status();
+      if (isTableMigrationBudgetError(error)) throw new AppError("table_migration_budget_exhausted", "Insufficient space allowance for the replay images", 409);
       throw error;
     }
     return this.status();

@@ -222,6 +222,94 @@ test("online migration catches edits during copy, behind the scan cursor and imm
   }
 });
 
+test("only the migration cron advances a Cloudflare checkpoint", async () => {
+  const { default: worker } = await import("./index");
+  const installation = await seededInstallation();
+  try {
+    const tick = async cron => {
+      const work = [];
+      await worker.scheduled({ cron }, { DB: installation.db }, { waitUntil: promise => work.push(promise) });
+      await Promise.all(work);
+    };
+    const migration = new SharedTableMigration(installation.db);
+    await tick("15 1 * * *");
+    expect((await migration.status()).phase).toBe("legacy");
+    await tick("*/5 * * * *");
+    expect((await migration.status()).rowsCopied).toBeGreaterThan(0);
+  } finally { installation.sqlite.close(); installation.cleanup(); }
+});
+
+test("correcting an unreadable table resumes both the initial copy and a frozen replay", async () => {
+  const { runOnlineTableMigration } = await import("./table-storage-migration");
+  for (const frozen of [false, true]) {
+    const installation = await seededInstallation();
+    const { db, sqlite } = installation;
+    try {
+      const migration = new SharedTableMigration(db);
+      if (frozen) {
+        let state = await migration.start();
+        while (state.phase !== "ready") state = await migration.advance();
+      }
+      const bad = await createMemoRecord(db, workspace, { notebookId: "nb_inbox", contentMarkdown: "<!-- edgeever-table-v1:broken -->" }, actor, "test");
+      await expect(runOnlineTableMigration(db, 100)).rejects.toMatchObject({ code: "invalid_legacy_table" });
+      const markdown = serializeTableDocument(tables[1]);
+      expect((await updateMemoRecord(db, workspace, bad.id, {contentMarkdown: markdown, expectedRevision: bad.revision}, actor, "test")).memo).toBeTruthy();
+      if (frozen) {
+        await expect(migration.advance({readRows: 1e6, writeRows: 1e6, extraBytes: 0})).rejects.toMatchObject({code: "table_migration_budget_exhausted"});
+        expect(sqlite.query("SELECT markdown FROM ee_table_migration_replay WHERE image='target'").get().markdown).toContain(":broken");
+      }
+      expect((await runOnlineTableMigration(db, 100)).phase).toBe("active");
+      const repaired = await getMemoDetail(db, workspace, bad.id);
+      expect(repaired.sharedTableRevision).toBe(1);
+      expect(parseTableDocument(repaired.contentMarkdown).records).toEqual(parseTableDocument(markdown).records);
+    } finally { sqlite.close(); installation.cleanup(); }
+  }
+});
+
+test("ordinary marker mentions stay writable and table markers following a NUL survive cutover", async () => {
+  const { runOnlineTableMigration } = await import("./table-storage-migration");
+  const installation = await seededInstallation();
+  const { db, sqlite } = installation;
+  try {
+    const prose = "<!-- intro -->\nExample edgeever-table-v1: in exported files\n<!-- end -->";
+    const table = structuredClone(tables[1]);
+    table.records[0].cells.name = "before\0after";
+    const markdown = serializeTableDocument(table);
+    const old = await createMemoRecord(db, workspace, { notebookId: "nb_inbox", contentMarkdown: prose }, actor, "test");
+    const legacy = await createMemoRecord(db, workspace, { notebookId: "nb_inbox", contentMarkdown: markdown }, actor, "test");
+    expect((await runOnlineTableMigration(db, 100)).phase).toBe("active");
+    const another = await createMemoRecord(db, workspace, { notebookId: "nb_inbox", contentMarkdown: prose }, actor, "test");
+    expect(another.contentMarkdown).toBe(prose);
+    expect((await updateMemoRecord(db, workspace, old.id, {contentMarkdown: prose + "!"}, actor, "test")).memo?.contentMarkdown).toBe(prose + "!");
+    const migrated = await getMemoDetail(db, workspace, legacy.id);
+    expect(migrated.sharedTableRevision).toBe(1);
+    expect(parseTableDocument(migrated.contentMarkdown).records[0].cells.name).toBe("before\0after");
+  } finally { sqlite.close(); installation.cleanup(); }
+});
+
+test("claiming replay images respects the owner's space budget at commit time", async () => {
+  const installation = await seededInstallation();
+  const { db, sqlite } = installation;
+  try {
+    const migration = new SharedTableMigration(db);
+    let state = await migration.start();
+    while (state.phase !== "ready") state = await migration.advance();
+    const table = structuredClone(tables[0]);
+    table.records[0].cells.name = "updated";
+    const id = installation.memos[0].id;
+    expect((await updateMemoRecord(db, workspace, id, {contentMarkdown: serializeTableDocument(table)}, actor, "test")).memo).toBeTruthy();
+    const unlimited = {readRows: 1e6, writeRows: 1e6, extraBytes: 1e7};
+    const step = () => sqlite.query("SELECT step FROM ee_table_migration").get().step;
+    const before = step();
+    await expect(migration.advance({...unlimited, extraBytes: 0})).rejects.toMatchObject({code: "table_migration_budget_exhausted"});
+    expect(step()).toBe(before);
+    expect(sqlite.query("SELECT count(*) AS n FROM ee_table_migration_replay").get().n).toBe(0);
+    expect(sqlite.query("SELECT memo_id FROM ee_table_migration_dirty").get().memo_id).toBe(id);
+    await migration.advance(unlimited);
+    expect(sqlite.query("SELECT count(*) AS n FROM ee_table_migration_replay").get().n).toBe(2);
+  } finally { sqlite.close(); installation.cleanup(); }
+});
+
 test("catch-up handles deleting and recreating a partially copied table and converting another to text", async () => {
   const installation = await seededInstallation();
   const { db, sqlite } = installation;

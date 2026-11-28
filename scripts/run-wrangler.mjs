@@ -105,7 +105,6 @@ const generatedSecretsPath = resolve(
 );
 const generatedLocalDevEnvPath = resolve(".env.wrangler.generated.local");
 let config = readFileSync(baseConfigPath, "utf8");
-let changed = false;
 
 const repositoryConfigError = repositoryWranglerConfigError(config, usesRepositoryConfig);
 if (repositoryConfigError) {
@@ -147,7 +146,6 @@ if (migrationCommand) {
       normalizeD1MigrationSql(source),
     );
   }
-  changed = true;
   writeWranglerNotice("ok", `local D1 migrations: ${migrationFiles.length} files`);
 }
 
@@ -161,7 +159,6 @@ const replaceTomlValue = (source, key, value) => {
     throw new Error(`Cannot find ${key} in ${baseConfigPath}`);
   }
 
-  changed = true;
   return source.replace(pattern, `$1${value}$2`);
 };
 
@@ -201,7 +198,6 @@ if (workersDev) {
     throw new Error(`Cannot find workers_dev in ${baseConfigPath}`);
   }
 
-  changed = true;
   config = config.replace(pattern, `workers_dev = ${normalized}`);
 }
 
@@ -367,19 +363,6 @@ const runtimeVars = {
   EDGE_EVER_ALLOW_UNAUTHENTICATED: isLocalCommand ? String(envValue("LOCAL_DEMO_SEED") === "true") : undefined,
   EDGE_EVER_COMMUNITY_REGISTRY_URL: envValue("COMMUNITY_REGISTRY_URL"),
 };
-const runtimeVarLines = Object.entries(runtimeVars)
-  .filter(([, value]) => Boolean(value))
-  .map(([key, value]) => `${key} = ${tomlString(value)}`);
-
-if (runtimeVarLines.length > 0) {
-  changed = true;
-  config = `${config.trimEnd()}
-
-[vars]
-${runtimeVarLines.join("\n")}
-`;
-}
-
 const demoMode = envValue("DEMO_MODE")?.toLowerCase();
 if (demoMode && !["true", "false"].includes(demoMode)) {
   throw new Error("EDGE_EVER_DEMO_MODE must be true or false.");
@@ -392,21 +375,26 @@ if (localDemoSeed && !["true", "false"].includes(localDemoSeed)) {
 
 config = configureDemoAssetRouting(config, demoMode === "true");
 
-const schedules = ["*/5 * * * *"];
-if (demoMode === "true") schedules.push(envValue("DEMO_RESET_CRON") || "0 19 * * *");
-if (/^\s*\[triggers\]/m.test(config)) {
-  const settings = parseToml(config);
-  settings.triggers.crons = [...new Set([...(settings.triggers.crons ?? []), ...schedules])];
-  config = stringifyToml(settings);
-} else {
-  config += `\n[triggers]\ncrons = ${JSON.stringify([...new Set(schedules)])}\n`;
+const settings = parseToml(config);
+settings.vars = { ...settings.vars, ...Object.fromEntries(Object.entries(runtimeVars).filter(([, value]) => Boolean(value))) };
+const demoEnabled = vars => String(vars?.EDGE_EVER_DEMO_MODE ?? "").trim().toLowerCase() === "true";
+const addSchedules = (triggers, vars) => {
+  const crons = new Set(triggers?.crons ?? []);
+  crons.add("*/5 * * * *");
+  if (demoEnabled(vars)) crons.add(vars.EDGE_EVER_DEMO_RESET_CRON || "0 19 * * *");
+  return { ...triggers, crons: [...crons] };
+};
+settings.triggers = addSchedules(settings.triggers, settings.vars);
+for (const environment of Object.values(settings.env ?? {})) {
+  if (environment.triggers || demoEnabled(environment.vars)) {
+    environment.triggers = addSchedules(environment.triggers ?? settings.triggers, environment.vars);
+  }
 }
-changed = true;
+config = stringifyToml(settings);
 
 const customDomain = envValue("CUSTOM_DOMAIN");
 const routePattern = envValue("ROUTE_PATTERN") || customDomain;
 if (routePattern) {
-  changed = true;
   config = `${config.trimEnd()}
 
 [[routes]]
@@ -437,19 +425,16 @@ if (isRemoteCommand && config.includes(`database_id = "${PLACEHOLDER_D1_ID}"`)) 
   process.exit(1);
 }
 
-const configPath = changed ? generatedConfigPath : baseConfigPath;
-if (changed) {
-  // Wrangler resolves migrations_dir relative to its config. Use an absolute,
-  // slash-normalized path so generated configs behave consistently in Windows
-  // Git Bash, PowerShell, Linux, and macOS.
-  config = config.replace(
-    /^migrations_dir\s*=\s*"[^"]+"/m,
-    `migrations_dir = ${tomlString(
-      (migrationCommand ? generatedMigrationsConfigDirectory : migrationsDirectory).replaceAll("\\", "/"),
-    )}`,
-  );
-  writeFileSync(generatedConfigPath, config);
-}
+// Wrangler resolves migrations_dir relative to its config. Use an absolute,
+// slash-normalized path so generated configs behave consistently in Windows
+// Git Bash, PowerShell, Linux, and macOS.
+config = config.replace(
+  /^migrations_dir\s*=\s*"[^"]+"/m,
+  `migrations_dir = ${tomlString(
+    (migrationCommand ? generatedMigrationsConfigDirectory : migrationsDirectory).replaceAll("\\", "/"),
+  )}`,
+);
+writeFileSync(generatedConfigPath, config);
 
 const isDryRun = wranglerArgs.includes("--dry-run") || wranglerArgs.includes("--dry-run=true");
 const captureDeploymentTargets = isDeployCommand && !isDryRun && shouldCaptureDeploymentTargets();
@@ -464,7 +449,7 @@ if (isDeployCommand && deploymentAuth.preservingAuthSecret && hasSecretsFileArg)
 
 if (isDevCommand) {
   // Local dev serves the web app from Vite, so an empty assets directory is enough.
-  const assetsDirectory = resolveWranglerAssetsDirectory(config, dirname(configPath));
+  const assetsDirectory = resolveWranglerAssetsDirectory(config, dirname(generatedConfigPath));
   if (assetsDirectory) mkdirSync(assetsDirectory, { recursive: true });
 }
 
@@ -482,7 +467,7 @@ if (captureDeploymentTargets) {
   rmSync(deploymentTargetsPath, { force: true });
 }
 
-const result = runWranglerSync(["--config", configPath, ...finalWranglerArgs], {
+const result = runWranglerSync(["--config", generatedConfigPath, ...finalWranglerArgs], {
   cwd: resolve("."),
   encoding: captureDeploymentTargets ? "utf8" : undefined,
   env: process.env,
@@ -502,7 +487,7 @@ if (captureDeploymentTargets) {
 
 if (result.status === 0 && isDeployCommand && !isDryRun) {
   for (const [secretName, secretValue] of Object.entries(authSecrets)) {
-    const secretResult = runWranglerSync(["--config", configPath, "secret", "put", secretName], {
+    const secretResult = runWranglerSync(["--config", generatedConfigPath, "secret", "put", secretName], {
       cwd: resolve("."),
       env: process.env,
       input: secretValue,

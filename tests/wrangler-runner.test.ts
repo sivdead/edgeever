@@ -195,7 +195,7 @@ describe("cross-platform Wrangler runner", () => {
       .split("\n")
       .filter((line) => line.startsWith("CREATE TRIGGER "));
 
-    expect(triggerLines).toHaveLength(46);
+    expect(triggerLines).toHaveLength(51);
     for (const triggerLine of triggerLines) {
       expect(triggerLine).toEndWith(" END;");
     }
@@ -228,10 +228,15 @@ describe("cross-platform Wrangler runner", () => {
       expect(runWithEnv({}).status).toBe(0);
       const ordinary = readFileSync(resolve(workingDirectory, ".wrangler.generated.toml"), "utf8");
       expect(Bun.TOML.parse(ordinary).triggers).toEqual({ crons: ["*/5 * * * *"] });
-      writeFileSync(configPath, 'name = "migration-test"\n[triggers]\ncrons = ["15 1 * * *"]\n');
-      expect(runWithEnv({ EDGE_EVER_DEMO_MODE: "true" }).status).toBe(0);
-      expect(Bun.TOML.parse(readFileSync(resolve(workingDirectory, ".wrangler.generated.toml"), "utf8")).triggers)
-        .toEqual({ crons: ["15 1 * * *", "*/5 * * * *", "0 19 * * *"] });
+      for (const definition of ['[triggers]\ncrons = ["15 1 * * *"]', 'triggers.crons = ["15 1 * * *"]', 'triggers = { crons = ["15 1 * * *"] }']) {
+        writeFileSync(configPath, `name = "migration-test"\n${definition}\n[vars]\nCUSTOM = "keep"\n[env.staging.triggers]\ncrons = ["0 6 * * *"]\n`);
+        expect(runWithEnv({ EDGE_EVER_DEMO_MODE: "TRUE" }).status).toBe(0);
+        const settings = Bun.TOML.parse(readFileSync(resolve(workingDirectory, ".wrangler.generated.toml"), "utf8"));
+        expect(settings.vars.CUSTOM).toBe("keep");
+        expect(settings.triggers.crons).toEqual(["15 1 * * *", "*/5 * * * *", "0 19 * * *"]);
+        expect(settings.env.staging.triggers.crons).toContain("*/5 * * * *");
+        expect(settings.env.staging.triggers.crons).toContain("0 6 * * *");
+      }
     } finally {
       rmSync(workingDirectory, { recursive: true, force: true });
     }

@@ -15,3 +15,6 @@ export const isDatabaseDailyQuotaError = (error: unknown): boolean =>
 
 export const isTableMigrationPausedError = (error: unknown): boolean =>
   matchesDatabaseError(error, /\btable_migration_in_progress\b/);
+
+export const isTableMigrationBudgetError = (error: unknown): boolean =>
+  matchesDatabaseError(error, /\btable_migration_budget_exhausted\b/);
