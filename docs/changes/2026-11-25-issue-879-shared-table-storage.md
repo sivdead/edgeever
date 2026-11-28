@@ -16,6 +16,8 @@ Verified on an isolated remote D1 and on the official `v2.31.2` Docker image wit
 
 The regression suite covers obsolete, unreadable images at initial copy and catch-up, and rejection of zero space for an image claim or replacement without moving the checkpoint. Looking up a real table marker in 250/500/1,000/2,000 rows of text with four ordinary HTML comments per row took 0.06/0.10/0.20/0.37 ms (median of seven local SQLite reads).
 
+The Windows Electron proxy run reached the actual backup only 0.95 seconds before its 45-second test deadline. Apply the same SQL files to each empty network-test database in one transaction, with foreign keys enabled before it starts. Verify the seeded schema and data match the original setup and run the existing proxy round trip with the original attachment, assertions and deadline. A local comparison of the 107 migrations gave identical schema objects (299), row counts, non-clock seed values and foreign-key checks. The setup took 190 ms with individual commits and 38 ms in one transaction. All eight Electron backup cases passed locally.
+
 ## Initial scope and risk
 
 - Move current records from memo bodies to a shared JSON row table on D1 and Docker SQLite. Scope queries by workspace, table and row order. Update only the affected row and necessary history and indexes. Preserve fields, views, permissions, sort semantics and attachment references.

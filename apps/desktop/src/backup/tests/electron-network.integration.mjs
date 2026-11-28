@@ -89,7 +89,13 @@ const roundTrip = async ({ stage, directory, cleanup, address, baseline, runElec
   const instance = async name => {
     const folder = join(directory, name); await mkdir(folder);
     const database = new Database(join(folder, "database.sqlite"));
-    for (const file of (await readdir("migrations")).filter(name => name.endsWith(".sql")).sort()) database.exec(await readFile(join("migrations", file), "utf8"));
+    const files = (await readdir("migrations")).filter(name => name.endsWith(".sql")).sort();
+    const migrations = await Promise.all(files.map(file => readFile(join("migrations", file), "utf8")));
+    // SQLite cannot enable foreign keys inside a transaction.
+    database.exec("PRAGMA foreign_keys = ON");
+    database.transaction(() => {
+      for (const sql of migrations) database.exec(sql);
+    })();
     const environment = { storage: createSelfHostedStorageAdapter(database, join(folder, "resources")), EDGE_EVER_ALLOW_UNAUTHENTICATED: "true", EDGE_EVER_RUNTIME: "self-hosted-bun" };
     const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
       const path = new URL(request.url).pathname;
